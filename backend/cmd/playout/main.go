@@ -1,15 +1,29 @@
 package main
 
 import (
-	"github.com/wass88/gameai/lib"
-	"os"
+	"flag"
 	"os/exec"
+	"strings"
+
+	"net/http"
+
+	"github.com/wass88/gameai/lib"
 )
 
 func main() {
-	p0 := os.Args[1]
-	p1 := os.Args[2]
-	c0 := exec.Command(p0)
-	c1 := exec.Command(p1)
-	lib.Playout(c0, c1)
+	sendData := flag.String("send", "", "if set addr!id!token, send data")
+	flag.Parse()
+	args := flag.Args()
+	game := args[0]
+	send, err := lib.ParsePlayoutSender(*sendData, *http.NewClient())
+	if err != nil {
+		panic(err)
+	}
+	players := args[1:]
+	cmds := []*exec.Cmd{}
+	for _, player := range players {
+		cmd := strings.Split(player, "")
+		cmds = append(cmds, exec.Command(cmd[0], cmd[1:]...))
+	}
+	lib.StartPlayout(game, send, cmds)
 }

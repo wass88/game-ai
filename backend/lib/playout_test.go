@@ -1,6 +1,8 @@
 package lib
 
 import (
+	"fmt"
+	"net/http"
 	"os/exec"
 	"testing"
 )
@@ -8,7 +10,16 @@ import (
 func TestPlayout(t *testing.T) {
 	cmd0 := exec.Command("/Users/admin/Documents/reversi-random/target/release/reversi_random")
 	cmd1 := exec.Command("/Users/admin/Documents/reversi-random/target/release/reversi_random")
-	r, err := Playout(cmd0, cmd1)
+	sender := &EmptySender{}
+	p0, err := RunWithReadWrite(cmd0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p1, err := RunWithReadWrite(cmd1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err := NewReversi().Start([]*CmdRW{p0, p1}, sender)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,5 +43,27 @@ func TestReversi(t *testing.T) {
 	p := r.playable()
 	if len(p) != 4 {
 		t.Fatalf("Playable is 4 : %+#v", p)
+	}
+}
+
+type mockClient struct{}
+
+func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
+	fmt.Printf("%v\n", req)
+	return &http.Response{StatusCode: 200}, nil
+}
+
+func TestParseSender(t *testing.T) {
+	sender, err := ParsePlayoutSender("http://xxx!1!TOKEN", &mockClient{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = sender.Update(ResultA{"put 1 2", ""})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = sender.Complete([]ResultPlayerA{{1, "", ""}, {-1, "", ""}})
+	if err != nil {
+		t.Fatal(err)
 	}
 }

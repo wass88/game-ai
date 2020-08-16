@@ -137,8 +137,8 @@ func (r *PlayoutID) ValidateToken(token string) (bool, error) {
 }
 
 type ResultA struct {
-	Record    string
-	Exception string
+	Record    string `json:"record"`
+	Exception string `json:"exception"`
 }
 
 func (r *PlayoutID) Update(result ResultA) error {
@@ -154,9 +154,9 @@ func (r *PlayoutID) Update(result ResultA) error {
 }
 
 type ResultPlayerA struct {
-	Result    int
-	Stderr    string
-	Exception string
+	Result    int    `json:"result"`
+	Stderr    string `json:"stderr"`
+	Exception string `json:"exception"`
 }
 
 func (r *PlayoutID) Complete(results []ResultPlayerA) error {

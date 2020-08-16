@@ -1,12 +1,14 @@
 package lib
 
 import (
-	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"os/exec"
-	"strconv"
 	"strings"
-	"time"
+
+	"github.com/pkg/errors"
 )
 
 type Result struct {
@@ -22,374 +24,114 @@ type ResultPlayer struct {
 	Exception string
 }
 
-type CmdRW struct {
-	buf    *bufio.ReadWriter
-	stderr []byte
-}
-
-func (r *CmdRW) WriteLn(s string) error {
-	_, err := r.buf.WriteString(s + "\n")
-	if err != nil {
-		return err
-	}
-	err = r.buf.Flush()
-	return err
-}
-func (r *CmdRW) ReadLn() (string, error) {
-	l := []byte{}
-	c := []byte{}
-	p := true
-	var err error
-	for p {
-		c, p, err = r.buf.ReadLine()
+func StartPlayout(gamename string, send IPlayoutSender, cmds []*exec.Cmd) (*Result, error) {
+	gameSelector := NewGameSelector()
+	gameSelector.Add("reversi", func() Game { return NewReversi() })
+	game := gameSelector.Get(gamename)
+	ps := []*CmdRW{}
+	for _, cmd := range cmds {
+		p, err := RunWithReadWrite(cmd)
 		if err != nil {
-			return "", err
+			return nil, fmt.Errorf("Failed Run: %v", cmd)
 		}
-		l = append(l, c...)
+		ps = append(ps, p)
 	}
-	return string(l), nil
+	result, err := game.Start(ps, send)
+	return result, err
 }
 
-// RunWithReadWrite runs cmd and returns pipe
-func RunWithReadWrite(c *exec.Cmd) (*CmdRW, error) {
-	in, err := c.StdinPipe()
-	if err != nil {
-		return nil, err
-	}
-	out, err := c.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	serr, err := c.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	b := bufio.NewReadWriter(bufio.NewReader(out), bufio.NewWriter(in))
-	res := &CmdRW{buf: b, stderr: []byte{}}
-	go func() {
-		b := make([]byte, 1024)
-		for {
-			k, err := serr.Read(b)
-			if err != nil {
-				panic(err)
-			}
-			res.stderr = append(res.stderr, b[:k]...)
-		}
-	}()
-	err = c.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
-
+type GameSelector struct {
+	data map[string](func() Game)
 }
 
-// Playout runs two players
-func Playout(player0, player1 *exec.Cmd) (*Result, error) {
-	fmt.Printf("Start...\n")
-	p0, err := RunWithReadWrite(player0)
-	if err != nil {
-		return nil, err
-	}
-	p1, err := RunWithReadWrite(player1)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		fmt.Printf("P0 stderr: %s\n", p0.stderr)
-		fmt.Printf("P1 stderr: %s\n", p1.stderr)
-	}()
+func NewGameSelector() GameSelector {
+	return GameSelector{map[string]func() Game{}}
+}
+func (g *GameSelector) Add(name string, game func() Game) {
+	g.data[name] = game
+}
 
-	reversi := NewReversi()
-	res, err := reversi.Start([]*CmdRW{p0, p1})
-
-	return res, err
+func (g *GameSelector) Get(name string) Game {
+	return g.data[name]()
 }
 
 type Game interface {
-	Start(players []*CmdRW) (*Result, error)
+	Start(players []*CmdRW, sender IPlayoutSender) (*Result, error)
 }
 
-type Reversi struct {
-	board  [][]int
-	first  bool
-	record []string
+type IPlayoutSender interface {
+	Update(result ResultA) error
+	Complete(results []ResultPlayerA) error
 }
 
-func NewReversi() *Reversi {
-	board := [][]int{}
-	for i := 0; i < 8; i++ {
-		board = append(board, []int{0, 0, 0, 0, 0, 0, 0, 0})
-	}
-	board[4][3] = 1
-	board[3][4] = 1
-	board[3][3] = 2
-	board[4][4] = 2
-	return &Reversi{board: board, first: true, record: []string{}}
+type HttpClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
-var d8y = [8]int{0, 1, 1, 1, 0, -1, -1, -1}
-var d8x = [8]int{1, 1, 0, -1, -1, -1, 0, 1}
-
-type point struct {
-	y int
-	x int
+type PlayoutSender struct {
+	API    string
+	ID     string
+	Token  string
+	Client HttpClient
 }
 
-func (r *Reversi) playable() []point {
-	res := []point{}
-	for y := 0; y < 8; y++ {
-		for x := 0; x < 8; x++ {
-			rev := r.reversal(y, x)
-			ok := false
-			for _, v := range rev {
-				if v > 0 {
-					ok = true
-					break
-				}
-			}
-			if ok {
-				res = append(res, point{y: y, x: x})
-			}
-		}
+func (s *PlayoutSender) PostJson(url string, j interface{}) error {
+	jsonBytes, err := json.Marshal(j)
+	if err != nil {
+		return errors.Wrapf(err, "Failed Marshal")
 	}
-	return res
-}
-func isIn(y, x int) bool {
-	return 0 <= y && y < 8 && 0 <= x && x < 8
-}
-func (r *Reversi) reversal(y, x int) []int {
-	res := []int{0, 0, 0, 0, 0, 0, 0, 0}
-	if r.board[y][x] != 0 {
-		return res
+	req, err := http.NewRequest(
+		"POST",
+		url,
+		bytes.NewBuffer(jsonBytes),
+	)
+	if err != nil {
+		return errors.Wrapf(err, "Failed Creating new request")
 	}
-	for d := 0; d < 8; d++ {
-		ny := y + d8y[d]
-		nx := x + d8x[d]
-		if !isIn(ny, nx) {
-			continue
-		}
-		c := r.board[ny][nx]
-		if c == 0 {
-			continue
-		}
-		m := 1
-		if !r.first {
-			m = 2
-		}
-		if c == m {
-			continue
-		}
-		for t := 2; t < 8; t++ {
-			ny = y + d8y[d]*t
-			nx = x + d8x[d]*t
-			if !isIn(ny, nx) {
-				break
-			}
-			c := r.board[ny][nx]
-			if c == 0 {
-				break
-			}
-			if c == m {
-				res[d] = t - 1
-				break
-			}
-		}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.Client.Do(req)
+	if err != nil {
+		return errors.Wrapf(err, "Faild Post")
 	}
-	return res
-}
-func (r *Reversi) put(y, x int) error {
-	if !isIn(y, x) {
-		return fmt.Errorf("Out of board %d, %d", y, x)
+	if resp.StatusCode != 200 {
+		return errors.Errorf("Bad StatusCode: %d", resp.StatusCode)
 	}
-	if r.board[y][x] != 0 {
-		return fmt.Errorf("There is ocupied %d, %d", y, x)
-	}
-	m := 1
-	if !r.first {
-		m = 2
-	}
-	rev := r.reversal(y, x)
-	ok := false
-	for d, v := range rev {
-		for i := 1; i <= v; i++ {
-			ok = true
-			ny := y + d8y[d]*i
-			nx := x + d8x[d]*i
-			r.board[ny][nx] = m
-		}
-	}
-	if !ok {
-		fmt.Printf("%+v\n", r.playable())
-		return fmt.Errorf("No Revesible Piece %d, %d", y, x)
-	}
-	r.board[y][x] = m
-	r.first = !r.first
 	return nil
 }
-func (r *Reversi) pass() error {
-	if len(r.playable()) != 0 {
-		return fmt.Errorf("You have places which can reverse oponent's pieces")
+func (s *PlayoutSender) URL(path string) string {
+	return fmt.Sprintf("%s/results/%s/%s?token=%s", s.API, s.ID, path, s.Token)
+}
+func (s *PlayoutSender) Update(result ResultA) error {
+	u := s.URL("update")
+	err := s.PostJson(u, result)
+	if err != nil {
+		return errors.Wrapf(err, "Faild Update")
 	}
-	r.first = !r.first
 	return nil
 }
-func (r *Reversi) isEnd() bool {
-	if len(r.playable()) != 0 {
-		return false
+func (s *PlayoutSender) Complete(results []ResultPlayerA) error {
+	u := s.URL("complete")
+	err := s.PostJson(u, results)
+	if err != nil {
+		return errors.Wrapf(err, "Faild Completes")
 	}
-	r.first = !r.first
-	p := len(r.playable())
-	r.first = !r.first
-	return p == 0
+	return nil
 }
 
-type action struct {
-	put bool
-	y   int
-	x   int
-}
+type EmptySender struct{}
 
-func parseAction(s string) (action, error) {
-	a := strings.Split(s, " ")
-	if a[0] == "pass" {
-		return action{false, 0, 0}, nil
-	}
-	if a[0] == "put" {
-		a1, err := strconv.Atoi(a[1])
-		if err != nil {
-			return action{false, 0, 0}, err
-		}
-		a2, err := strconv.Atoi(a[2])
-		if err != nil {
-			return action{false, 0, 0}, err
-		}
-		return action{true, a1, a2}, nil
-	}
-	return action{false, 0, 0}, fmt.Errorf("Unknown command: %s", s)
-}
+func (_ *EmptySender) Update(_ ResultA) error           { return nil }
+func (_ *EmptySender) Complete(_ []ResultPlayerA) error { return nil }
 
-func (r *Reversi) act(a action) error {
-	if a.put {
-		return r.put(a.y, a.x)
-	} else {
-		return r.pass()
+func ParsePlayoutSender(s string, client HttpClient) (IPlayoutSender, error) {
+	if s == "" {
+		return &EmptySender{}, nil
 	}
-}
-func (r *Reversi) result() int {
-	f := 0
-	s := 0
-	for y := 0; y < 8; y++ {
-		for x := 0; x < 8; x++ {
-			if r.board[y][x] == 1 {
-				f++
-			} else if r.board[y][x] == 2 {
-				s++
-			}
-		}
+	sp := strings.Split(s, "!")
+	if len(sp) != 3 {
+		return nil, errors.Errorf("Send format is invalied: %s", s)
 	}
-	if f == 0 {
-		return -64
-	}
-	if s == 0 {
-		return 64
-	}
-	return f - s
-}
-func (r *Reversi) boardStr() string {
-	res := ""
-	for y := 0; y < 8; y++ {
-		for x := 0; x < 8; x++ {
-			c := r.board[y][x]
-			if c == 0 {
-				res += "."
-			} else if c == 1 {
-				res += "O"
-			} else if c == 2 {
-				res += "X"
-			}
-		}
-		res += "\n"
-	}
-	return res
-}
-
-const timeout = 5 * time.Second
-
-func (c *CmdRW) Wait() (string, error) {
-	c.WriteLn("wait")
-	type serr struct {
-		res string
-		err error
-	}
-	ch := make(chan serr, 1)
-	go func() {
-		res, err := c.ReadLn()
-		ch <- serr{res, err}
-	}()
-	select {
-	case res := <-ch:
-		return res.res, res.err
-	case <-time.After(timeout):
-		return "", fmt.Errorf("Timeout %v", timeout)
-	}
-}
-func (r *Reversi) Start(players []*CmdRW) (*Result, error) {
-	r0 := ResultPlayer{0, "", ""}
-	r1 := ResultPlayer{0, "", ""}
-	result := &Result{Result: []ResultPlayer{r0, r1}, Record: []string{}, Game: "Reversi", Exception: ""}
-
-	p0 := players[0]
-	p1 := players[1]
-
-	p0.WriteLn("init 0")
-	p1.WriteLn("init 1")
-
-	cp := p0
-	op := p1
-	cn := 0
-	on := 1
-	for {
-		fmt.Printf("Wait...P%d\n", cn)
-		s, err := cp.Wait()
-		if err != nil {
-			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected EOF: %s", cn, err.Error())
-			result.Result[cn].Result = -64
-			result.Result[on].Result = 64
-			return result, nil
-		}
-		fmt.Printf("P%d: %v\n", cn, s)
-		result.Record = append(result.Record, s)
-
-		a, err := parseAction(s)
-		if err != nil {
-			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected Action: %s", cn, err.Error())
-			result.Result[cn].Result = -64
-			result.Result[on].Result = 64
-			return result, nil
-		}
-		err = r.act(a)
-		if err != nil {
-			result.Result[cn].Exception = fmt.Sprintf("P%d: Wrong Action: %s", cn, err.Error())
-			result.Result[cn].Result = -64
-			result.Result[on].Result = 64
-			return result, nil
-		}
-		op.WriteLn(fmt.Sprintf("played %s", s))
-		fmt.Printf("%s", r.boardStr())
-		if r.isEnd() {
-			break
-		}
-
-		op, cp = cp, op
-		on, cn = cn, on
-
-	}
-	res := r.result()
-	result.Result[0].Result = res
-	result.Result[1].Result = -res
-	p0.WriteLn(fmt.Sprintf("result %d", res))
-	p1.WriteLn(fmt.Sprintf("result %d", -res))
-	return result, nil
+	return &PlayoutSender{API: sp[0], ID: sp[1], Token: sp[2], Client: client}, nil
 }
