@@ -2,8 +2,10 @@ package lib
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"strings"
 	"testing"
 )
 
@@ -50,7 +52,8 @@ type mockClient struct{}
 
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	fmt.Printf("%v\n", req)
-	return &http.Response{StatusCode: 200}, nil
+	empty := ioutil.NopCloser(strings.NewReader(""))
+	return &http.Response{StatusCode: 200, Body: empty}, nil
 }
 
 func TestParseSender(t *testing.T) {

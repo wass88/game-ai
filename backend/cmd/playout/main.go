@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -15,15 +16,21 @@ func main() {
 	flag.Parse()
 	args := flag.Args()
 	game := args[0]
-	send, err := lib.ParsePlayoutSender(*sendData, *http.NewClient())
+	send, err := lib.ParsePlayoutSender(*sendData, &http.Client{})
 	if err != nil {
 		panic(err)
 	}
 	players := args[1:]
 	cmds := []*exec.Cmd{}
-	for _, player := range players {
-		cmd := strings.Split(player, "")
+	fmt.Printf("Game: %s\n", game)
+	fmt.Printf("Send: %+#v\n", send)
+	for i, player := range players {
+		cmd := strings.Split(player, " ")
 		cmds = append(cmds, exec.Command(cmd[0], cmd[1:]...))
+		fmt.Printf("Player #%d: %s\n", i, player)
 	}
-	lib.StartPlayout(game, send, cmds)
+	_, err = lib.StartPlayout(game, send, cmds)
+	if err != nil {
+		panic(err)
+	}
 }

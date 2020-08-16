@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os/exec"
 	"strings"
@@ -37,6 +38,22 @@ func StartPlayout(gamename string, send IPlayoutSender, cmds []*exec.Cmd) (*Resu
 		ps = append(ps, p)
 	}
 	result, err := game.Start(ps, send)
+	if err != nil {
+		return nil, errors.Wrapf(err, "On Start")
+	}
+	re := ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception}
+	err = send.Update(re)
+	if err != nil {
+		return nil, errors.Wrapf(err, "On Update")
+	}
+	res := []ResultPlayerA{}
+	for _, r := range result.Result {
+		res = append(res, ResultPlayerA{Result: r.Result, Stderr: r.Stderr, Exception: r.Exception})
+	}
+	err = send.Complete(res)
+	if err != nil {
+		return nil, errors.Wrapf(err, "On Complete")
+	}
 	return result, err
 }
 
@@ -95,8 +112,12 @@ func (s *PlayoutSender) PostJson(url string, j interface{}) error {
 	if err != nil {
 		return errors.Wrapf(err, "Faild Post")
 	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return errors.Wrapf(err, "Faild ReadAll Body")
+	}
 	if resp.StatusCode != 200 {
-		return errors.Errorf("Bad StatusCode: %d", resp.StatusCode)
+		return errors.Errorf("Bad StatusCode: %d (%s)", resp.StatusCode, body)
 	}
 	return nil
 }
@@ -109,6 +130,7 @@ func (s *PlayoutSender) Update(result ResultA) error {
 	if err != nil {
 		return errors.Wrapf(err, "Faild Update")
 	}
+	fmt.Printf("UPDATE COMPLETED\n")
 	return nil
 }
 func (s *PlayoutSender) Complete(results []ResultPlayerA) error {

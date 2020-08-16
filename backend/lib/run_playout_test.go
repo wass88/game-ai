@@ -141,3 +141,15 @@ func TestRunPlayout(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestCheckToken(t *testing.T) {
+	db := mockDB()
+	playoutID := PlayoutID{1, db}
+	ok, err := playoutID.ValidateToken("TOKEN")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatalf("Token is not expected")
+	}
+}

@@ -1,24 +1,65 @@
 package lib
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	"database/sql"
+	"net/http"
+	"strconv"
 
+	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 )
 
-func GenerateRandomBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
+func GetPlayoutIDAndCheckToken(c echo.Context, db *DB) (*PlayoutID, error) {
+	idn := c.Param("id")
+	id, err := strconv.Atoi(idn)
 	if err != nil {
-		return nil, err
+		return nil, echo.NewHTTPError(http.StatusBadRequest, errors.Wrap(err, "Unexpected id"))
 	}
-	return b, nil
-}
+	token := c.QueryParam("token")
+	playoutID := PlayoutID{int64(id), db}
+	ok, err := playoutID.ValidateToken(token)
+	if err != nil {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, errors.Wrap(err, "DB error on validate token"))
+	}
+	if !ok {
+		return nil, echo.NewHTTPError(http.StatusBadRequest, "Bad Token")
+	}
+	return &playoutID, nil
 
-func GenerateRandomString(s int) (string, error) {
-	b, err := GenerateRandomBytes(s)
-	return base64.URLEncoding.EncodeToString(b), err
+}
+func HandlerResultsUpdate(db *DB) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		id, err := GetPlayoutIDAndCheckToken(c, db)
+		if err != nil {
+			return err
+		}
+		result := new(ResultA)
+		if err := c.Bind(result); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Json Parse Error")
+		}
+		err = id.Update(*result)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, errors.Wrap(err, "DB error on Update"))
+		}
+		return c.String(http.StatusOK, "")
+	}
+}
+func HandlerResultsComplete(db *DB) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		id, err := GetPlayoutIDAndCheckToken(c, db)
+		if err != nil {
+			return err
+		}
+		result := new([]ResultPlayerA)
+		if err := c.Bind(result); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Json Parse Error")
+		}
+		err = id.Complete(*result)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "DB error", err)
+		}
+		return c.String(http.StatusOK, "")
+	}
 }
 
 const TOKEN_LEN = 64
@@ -118,10 +159,7 @@ func (t *PlayoutTask) SpownPlayout(runner RunnerConf) {
 }
 
 func (r *PlayoutID) ValidateToken(token string) (bool, error) {
-	type Token struct {
-		token string `db:"token"`
-	}
-	tok := []Token{}
+	tok := []sql.NullString{}
 	err := r.DB.DB.Select(&tok, `
 		SELECT playout.token AS token
 		FROM playout
@@ -133,7 +171,7 @@ func (r *PlayoutID) ValidateToken(token string) (bool, error) {
 	if len(tok) < 1 {
 		return false, errors.New("Missing Playout")
 	}
-	return tok[0].token == token, nil
+	return tok[0].String == token, nil
 }
 
 type ResultA struct {

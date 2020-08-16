@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Reversi struct {
@@ -50,6 +52,10 @@ func (r *Reversi) Start(players []*CmdRW, sender IPlayoutSender) (*Result, error
 		}
 		fmt.Printf("P%d: %v\n", cn, s)
 		result.Record = append(result.Record, s)
+		err = sender.Update(ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception})
+		if err != nil {
+			return nil, errors.Wrapf(err, "On Update")
+		}
 
 		a, err := parseAction(s)
 		if err != nil {
@@ -73,7 +79,6 @@ func (r *Reversi) Start(players []*CmdRW, sender IPlayoutSender) (*Result, error
 
 		op, cp = cp, op
 		on, cn = cn, on
-
 	}
 	res := r.result()
 	result.Result[0].Result = res
