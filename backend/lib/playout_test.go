@@ -16,6 +16,15 @@ func TestPlayout(t *testing.T) {
 	if r.Exception != "" {
 		t.Fatal(r.Exception)
 	}
+	if r.Result[0].Exception != "" {
+		t.Fatal(r.Result[0].Exception)
+	}
+	if r.Result[1].Exception != "" {
+		t.Fatal(r.Result[1].Exception)
+	}
+	if r.Result[0].Result != -r.Result[1].Result {
+		t.Fatalf("%d != - %d", r.Result[0].Result, r.Result[1].Result)
+	}
 }
 
 func TestReversi(t *testing.T) {

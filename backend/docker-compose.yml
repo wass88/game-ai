@@ -1,0 +1,23 @@
+version: "2"
+services:
+  db:
+    image: mysql:8.0.21
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: goodpassword
+      MYSQL_DATABASE: dev
+    volumes:
+      - ./.data/db:/var/lib/mysql
+    ports:
+      - 13306:3306
+
+  web:
+    build: .
+    restart: always
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    environment:
+      MYSQL_DATABASE: root:goodpassword@db/dev

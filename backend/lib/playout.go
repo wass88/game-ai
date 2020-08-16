@@ -10,9 +10,15 @@ import (
 )
 
 type Result struct {
-	Result    int
-	Record    []string
 	Game      string
+	Record    []string
+	Exception string
+	Result    []ResultPlayer
+}
+
+type ResultPlayer struct {
+	Result    int
+	Stderr    string
 	Exception string
 }
 
@@ -330,7 +336,9 @@ func (c *CmdRW) Wait() (string, error) {
 	}
 }
 func (r *Reversi) Start(players []*CmdRW) (*Result, error) {
-	result := &Result{Result: 0, Record: []string{}, Game: "Reversi", Exception: ""}
+	r0 := ResultPlayer{0, "", ""}
+	r1 := ResultPlayer{0, "", ""}
+	result := &Result{Result: []ResultPlayer{r0, r1}, Record: []string{}, Game: "Reversi", Exception: ""}
 
 	p0 := players[0]
 	p1 := players[1]
@@ -341,12 +349,14 @@ func (r *Reversi) Start(players []*CmdRW) (*Result, error) {
 	cp := p0
 	op := p1
 	cn := 0
+	on := 1
 	for {
 		fmt.Printf("Wait...P%d\n", cn)
 		s, err := cp.Wait()
 		if err != nil {
-			result.Exception = fmt.Sprintf("P%d: Unexpected EOF: %s", cn, err.Error())
-			result.Result = -64
+			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected EOF: %s", cn, err.Error())
+			result.Result[cn].Result = -64
+			result.Result[on].Result = 64
 			return result, nil
 		}
 		fmt.Printf("P%d: %v\n", cn, s)
@@ -354,14 +364,16 @@ func (r *Reversi) Start(players []*CmdRW) (*Result, error) {
 
 		a, err := parseAction(s)
 		if err != nil {
-			result.Exception = fmt.Sprintf("P%d: Unexpected Action: %s", cn, err.Error())
-			result.Result = -64
+			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected Action: %s", cn, err.Error())
+			result.Result[cn].Result = -64
+			result.Result[on].Result = 64
 			return result, nil
 		}
 		err = r.act(a)
 		if err != nil {
-			result.Exception = fmt.Sprintf("P%d: Wrong Action: %s", cn, err.Error())
-			result.Result = -64
+			result.Result[cn].Exception = fmt.Sprintf("P%d: Wrong Action: %s", cn, err.Error())
+			result.Result[cn].Result = -64
+			result.Result[on].Result = 64
 			return result, nil
 		}
 		op.WriteLn(fmt.Sprintf("played %s", s))
@@ -371,15 +383,13 @@ func (r *Reversi) Start(players []*CmdRW) (*Result, error) {
 		}
 
 		op, cp = cp, op
-		if cn == 0 {
-			cn = 1
-		} else {
-			cn = 0
-		}
+		on, cn = cn, on
 
 	}
-	result.Result = r.result()
-	p0.WriteLn(fmt.Sprintf("result %d", result.Result))
-	p1.WriteLn(fmt.Sprintf("result %d", -result.Result))
+	res := r.result()
+	result.Result[0].Result = res
+	result.Result[1].Result = -res
+	p0.WriteLn(fmt.Sprintf("result %d", res))
+	p1.WriteLn(fmt.Sprintf("result %d", -res))
 	return result, nil
 }
