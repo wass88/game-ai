@@ -1,7 +1,9 @@
-package lib
+package server
 
 import (
 	"testing"
+
+	"github.com/wass88/gameai/lib/protocol"
 )
 
 func getDB() *DB {
@@ -87,11 +89,11 @@ func TestNewPlayout(t *testing.T) {
 func TestUpdatePlayout(t *testing.T) {
 	db := mockDB()
 	playoutID := PlayoutID{1, db}
-	err := playoutID.Update(ResultA{"put 0 0", ""})
+	err := playoutID.Update(protocol.ResultA{"put 0 0", ""})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = playoutID.Update(ResultA{"put 1 1", ""})
+	err = playoutID.Update(protocol.ResultA{"put 1 1", ""})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +102,7 @@ func TestUpdatePlayout(t *testing.T) {
 func TestCompletePlayout(t *testing.T) {
 	db := mockDB()
 	playoutID := PlayoutID{1, db}
-	res := []ResultPlayerA{{-12, "stderr", ""}, {12, "stderr", ""}}
+	res := []protocol.ResultPlayerA{{-12, "stderr", ""}, {12, "stderr", ""}}
 	err := playoutID.Complete(res)
 	if err != nil {
 		t.Fatal(err)

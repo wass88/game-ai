@@ -1,4 +1,4 @@
-package lib
+package playout
 
 import (
 	"fmt"
@@ -7,21 +7,25 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+
+	gi "github.com/wass88/gameai/lib/game"
+	"github.com/wass88/gameai/lib/game/reversi"
+	"github.com/wass88/gameai/lib/protocol"
 )
 
 func TestPlayout(t *testing.T) {
 	cmd0 := exec.Command("/Users/admin/Documents/reversi-random/target/release/reversi_random")
 	cmd1 := exec.Command("/Users/admin/Documents/reversi-random/target/release/reversi_random")
 	sender := &EmptySender{}
-	p0, err := RunWithReadWrite(cmd0)
+	p0, err := gi.RunWithReadWrite(cmd0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	p1, err := RunWithReadWrite(cmd1)
+	p1, err := gi.RunWithReadWrite(cmd1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	r, err := NewReversi().Start([]*CmdRW{p0, p1}, sender)
+	r, err := reversi.NewReversi().Start([]*gi.CmdRW{p0, p1}, sender)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -40,14 +44,6 @@ func TestPlayout(t *testing.T) {
 	}
 }
 
-func TestReversi(t *testing.T) {
-	r := NewReversi()
-	p := r.playable()
-	if len(p) != 4 {
-		t.Fatalf("Playable is 4 : %+#v", p)
-	}
-}
-
 type mockClient struct{}
 
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
@@ -61,11 +57,11 @@ func TestParseSender(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sender.Update(ResultA{"put 1 2", ""})
+	err = sender.Update(protocol.ResultA{"put 1 2", ""})
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = sender.Complete([]ResultPlayerA{{1, "", ""}, {-1, "", ""}})
+	err = sender.Complete([]protocol.ResultPlayerA{{1, "", ""}, {-1, "", ""}})
 	if err != nil {
 		t.Fatal(err)
 	}

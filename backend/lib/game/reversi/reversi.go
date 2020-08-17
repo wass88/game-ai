@@ -1,4 +1,4 @@
-package lib
+package reversi
 
 import (
 	"fmt"
@@ -6,6 +6,9 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/wass88/gameai/lib/game"
+	"github.com/wass88/gameai/lib/protocol"
+	pr "github.com/wass88/gameai/lib/protocol"
 )
 
 type Reversi struct {
@@ -26,10 +29,10 @@ func NewReversi() *Reversi {
 	return &Reversi{board: board, first: true, record: []string{}}
 }
 
-func (r *Reversi) Start(players []*CmdRW, sender IPlayoutSender) (*Result, error) {
-	r0 := ResultPlayer{0, "", ""}
-	r1 := ResultPlayer{0, "", ""}
-	result := &Result{Result: []ResultPlayer{r0, r1}, Record: []string{}, Game: "Reversi", Exception: ""}
+func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.Result, error) {
+	r0 := pr.ResultPlayer{0, "", ""}
+	r1 := pr.ResultPlayer{0, "", ""}
+	result := &pr.Result{Result: []pr.ResultPlayer{r0, r1}, Record: []string{}, Game: "Reversi", Exception: ""}
 
 	p0 := players[0]
 	p1 := players[1]
@@ -52,7 +55,7 @@ func (r *Reversi) Start(players []*CmdRW, sender IPlayoutSender) (*Result, error
 		}
 		fmt.Printf("P%d: %v\n", cn, s)
 		result.Record = append(result.Record, s)
-		err = sender.Update(ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception})
+		err = sender.Update(protocol.ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception})
 		if err != nil {
 			return nil, errors.Wrapf(err, "On Update")
 		}
@@ -96,7 +99,7 @@ type point struct {
 	x int
 }
 
-func (r *Reversi) playable() []point {
+func (r *Reversi) Playable() []point {
 	res := []point{}
 	for y := 0; y < 8; y++ {
 		for x := 0; x < 8; x++ {
@@ -180,7 +183,7 @@ func (r *Reversi) put(y, x int) error {
 		}
 	}
 	if !ok {
-		fmt.Printf("%+v\n", r.playable())
+		fmt.Printf("%+v\n", r.Playable())
 		return fmt.Errorf("No Revesible Piece %d, %d", y, x)
 	}
 	r.board[y][x] = m
@@ -188,18 +191,18 @@ func (r *Reversi) put(y, x int) error {
 	return nil
 }
 func (r *Reversi) pass() error {
-	if len(r.playable()) != 0 {
+	if len(r.Playable()) != 0 {
 		return fmt.Errorf("You have places which can reverse oponent's pieces")
 	}
 	r.first = !r.first
 	return nil
 }
 func (r *Reversi) isEnd() bool {
-	if len(r.playable()) != 0 {
+	if len(r.Playable()) != 0 {
 		return false
 	}
 	r.first = !r.first
-	p := len(r.playable())
+	p := len(r.Playable())
 	r.first = !r.first
 	return p == 0
 }

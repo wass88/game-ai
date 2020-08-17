@@ -1,4 +1,4 @@
-package lib
+package playout
 
 import (
 	"bytes"
@@ -10,28 +10,20 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	gi "github.com/wass88/gameai/lib/game"
+	"github.com/wass88/gameai/lib/game/reversi"
+	"github.com/wass88/gameai/lib/protocol"
+	pr "github.com/wass88/gameai/lib/protocol"
 )
 
-type Result struct {
-	Game      string
-	Record    []string
-	Exception string
-	Result    []ResultPlayer
-}
-
-type ResultPlayer struct {
-	Result    int
-	Stderr    string
-	Exception string
-}
-
-func StartPlayout(gamename string, send IPlayoutSender, cmds []*exec.Cmd) (*Result, error) {
+func StartPlayout(gamename string, send gi.IPlayoutSender, cmds []*exec.Cmd) (*pr.Result, error) {
 	gameSelector := NewGameSelector()
-	gameSelector.Add("reversi", func() Game { return NewReversi() })
+	gameSelector.Add("reversi", func() gi.Game { return reversi.NewReversi() })
+
 	game := gameSelector.Get(gamename)
-	ps := []*CmdRW{}
+	ps := []*gi.CmdRW{}
 	for _, cmd := range cmds {
-		p, err := RunWithReadWrite(cmd)
+		p, err := gi.RunWithReadWrite(cmd)
 		if err != nil {
 			return nil, fmt.Errorf("Failed Run: %v", cmd)
 		}
@@ -41,14 +33,14 @@ func StartPlayout(gamename string, send IPlayoutSender, cmds []*exec.Cmd) (*Resu
 	if err != nil {
 		return nil, errors.Wrapf(err, "On Start")
 	}
-	re := ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception}
+	re := protocol.ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception}
 	err = send.Update(re)
 	if err != nil {
 		return nil, errors.Wrapf(err, "On Update")
 	}
-	res := []ResultPlayerA{}
+	res := []protocol.ResultPlayerA{}
 	for _, r := range result.Result {
-		res = append(res, ResultPlayerA{Result: r.Result, Stderr: r.Stderr, Exception: r.Exception})
+		res = append(res, protocol.ResultPlayerA{Result: r.Result, Stderr: r.Stderr, Exception: r.Exception})
 	}
 	err = send.Complete(res)
 	if err != nil {
@@ -58,27 +50,18 @@ func StartPlayout(gamename string, send IPlayoutSender, cmds []*exec.Cmd) (*Resu
 }
 
 type GameSelector struct {
-	data map[string](func() Game)
+	data map[string](func() gi.Game)
 }
 
 func NewGameSelector() GameSelector {
-	return GameSelector{map[string]func() Game{}}
+	return GameSelector{map[string]func() gi.Game{}}
 }
-func (g *GameSelector) Add(name string, game func() Game) {
+func (g *GameSelector) Add(name string, game func() gi.Game) {
 	g.data[name] = game
 }
 
-func (g *GameSelector) Get(name string) Game {
+func (g *GameSelector) Get(name string) gi.Game {
 	return g.data[name]()
-}
-
-type Game interface {
-	Start(players []*CmdRW, sender IPlayoutSender) (*Result, error)
-}
-
-type IPlayoutSender interface {
-	Update(result ResultA) error
-	Complete(results []ResultPlayerA) error
 }
 
 type HttpClient interface {
@@ -124,7 +107,7 @@ func (s *PlayoutSender) PostJson(url string, j interface{}) error {
 func (s *PlayoutSender) URL(path string) string {
 	return fmt.Sprintf("%s/results/%s/%s?token=%s", s.API, s.ID, path, s.Token)
 }
-func (s *PlayoutSender) Update(result ResultA) error {
+func (s *PlayoutSender) Update(result protocol.ResultA) error {
 	u := s.URL("update")
 	err := s.PostJson(u, result)
 	if err != nil {
@@ -133,7 +116,7 @@ func (s *PlayoutSender) Update(result ResultA) error {
 	fmt.Printf("UPDATE COMPLETED\n")
 	return nil
 }
-func (s *PlayoutSender) Complete(results []ResultPlayerA) error {
+func (s *PlayoutSender) Complete(results []protocol.ResultPlayerA) error {
 	u := s.URL("complete")
 	err := s.PostJson(u, results)
 	if err != nil {
@@ -144,10 +127,10 @@ func (s *PlayoutSender) Complete(results []ResultPlayerA) error {
 
 type EmptySender struct{}
 
-func (_ *EmptySender) Update(_ ResultA) error           { return nil }
-func (_ *EmptySender) Complete(_ []ResultPlayerA) error { return nil }
+func (_ *EmptySender) Update(_ protocol.ResultA) error           { return nil }
+func (_ *EmptySender) Complete(_ []protocol.ResultPlayerA) error { return nil }
 
-func ParsePlayoutSender(s string, client HttpClient) (IPlayoutSender, error) {
+func ParsePlayoutSender(s string, client HttpClient) (gi.IPlayoutSender, error) {
 	if s == "" {
 		return &EmptySender{}, nil
 	}

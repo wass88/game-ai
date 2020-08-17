@@ -22,4 +22,9 @@ db:
 dev: target/server
 	MYSQL_DATABASE="root:goodpassword@tcp(127.0.0.1:13306)/dev" ./target/server
 
-.PHONY: dev db
+test:
+	go test -v ./lib/...
+
+build: target/server target/playout
+
+.PHONY: dev db test build

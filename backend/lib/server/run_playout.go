@@ -1,4 +1,4 @@
-package lib
+package server
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
+	"github.com/wass88/gameai/lib/protocol"
 )
 
 func GetPlayoutIDAndCheckToken(c echo.Context, db *DB) (*PlayoutID, error) {
@@ -33,7 +34,7 @@ func HandlerResultsUpdate(db *DB) func(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		result := new(ResultA)
+		result := new(protocol.ResultA)
 		if err := c.Bind(result); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Json Parse Error")
 		}
@@ -50,7 +51,7 @@ func HandlerResultsComplete(db *DB) func(c echo.Context) error {
 		if err != nil {
 			return err
 		}
-		result := new([]ResultPlayerA)
+		result := new([]protocol.ResultPlayerA)
 		if err := c.Bind(result); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Json Parse Error")
 		}
@@ -174,12 +175,7 @@ func (r *PlayoutID) ValidateToken(token string) (bool, error) {
 	return tok[0].String == token, nil
 }
 
-type ResultA struct {
-	Record    string `json:"record"`
-	Exception string `json:"exception"`
-}
-
-func (r *PlayoutID) Update(result ResultA) error {
+func (r *PlayoutID) Update(result protocol.ResultA) error {
 	_, err := r.DB.DB.Exec(`
 		INSERT INTO playout_result (playout_id, record, exception)
 		VALUES (?, ?, ?)
@@ -191,13 +187,7 @@ func (r *PlayoutID) Update(result ResultA) error {
 	return nil
 }
 
-type ResultPlayerA struct {
-	Result    int    `json:"result"`
-	Stderr    string `json:"stderr"`
-	Exception string `json:"exception"`
-}
-
-func (r *PlayoutID) Complete(results []ResultPlayerA) error {
+func (r *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
 	for i, result := range results {
 		_, err := r.DB.DB.Exec(`
 			INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)

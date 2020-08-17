@@ -6,12 +6,12 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"github.com/wass88/gameai/lib"
+	"github.com/wass88/gameai/lib/server"
 )
 
 func main() {
 	dbname := os.Getenv("MYSQL_DATABASE")
-	db := lib.NewDB(dbname)
+	db := server.NewDB(dbname)
 
 	e := echo.New()
 
@@ -19,8 +19,8 @@ func main() {
 	e.Use(middleware.Recover())
 
 	//e.GET("/hello", handler.MainPage())
-	e.POST("/api/results/:id/update", lib.HandlerResultsUpdate(db))
-	e.POST("/api/results/:id/complete", lib.HandlerResultsComplete(db))
+	e.POST("/api/results/:id/update", server.HandlerResultsUpdate(db))
+	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
 
 	addr := os.Getenv("LISTEN_ADDR")
 	if addr == "" {
