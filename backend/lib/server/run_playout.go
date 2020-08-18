@@ -10,6 +10,10 @@ import (
 	"github.com/wass88/gameai/lib/protocol"
 )
 
+func (db *DB) KickPlayout() error {
+	panic("not implemented")
+}
+
 func GetPlayoutIDAndCheckToken(c echo.Context, db *DB) (*PlayoutID, error) {
 	idn := c.Param("id")
 	id, err := strconv.Atoi(idn)

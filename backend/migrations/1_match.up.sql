@@ -4,13 +4,21 @@ CREATE TABLE user (
     updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     name varchar(255) NOT NULL,
     twitter_token varchar(255) NOT NULL);
+CREATE TABLE game (
+    id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    name VARCHAR(255) NOT NULL);
 CREATE TABLE ai_github (
     id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    game_id int NOT NULL,
     user_id int NOT NULL,
     github VARCHAR(255) NOT NULL,
     branch VARCHAR(255) NOT NULL,
+    updating enum("active", "ignore") NOT NULL,
+    FOREIGN KEY (game_id) REFERENCES game(id),
     FOREIGN KEY (user_id) REFERENCES user(id));
 CREATE TABLE ai (
     id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
@@ -20,11 +28,6 @@ CREATE TABLE ai (
     ai_github_id int NOT NULL,
     commit VARCHAR(255) NOT NULL,
     FOREIGN KEY (ai_github_id) REFERENCES ai_github(id));
-CREATE TABLE game (
-    id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    name VARCHAR(255) NOT NULL);
 CREATE TABLE playout (
     id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
