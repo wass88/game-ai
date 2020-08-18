@@ -9,6 +9,9 @@ target/server: cmd/server/main.go $(LIB)
 target/playout: cmd/playout/main.go $(LIB)
 	$(GO) -o $@ cmd/playout/main.go
 
+target/container: cmd/container/main.go $(LIB)
+	$(GO) -o $@ cmd/container/main.go
+
 target/server.alpine: cmd/server/main.go $(LIB)
 	$(GO_ALPINE) -o $@ cmd/server/main.go
 

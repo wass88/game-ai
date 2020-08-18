@@ -46,6 +46,7 @@ type AIM struct {
 	UpdatedAt  time.Time `db:"updated_at"`
 	AIGithubID int64     `db:"ai_github_id"`
 	Commit     string    `db:"commit"`
+	State      string    `db:"state"`
 }
 
 type GameM struct {

@@ -16,6 +16,7 @@ CREATE TABLE ai (
     id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
     created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    state enum("found", "setup", "ready", "purged") NOT NULL,
     ai_github_id int NOT NULL,
     commit VARCHAR(255) NOT NULL,
     FOREIGN KEY (ai_github_id) REFERENCES ai_github(id));
