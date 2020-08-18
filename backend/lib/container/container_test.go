@@ -1,31 +1,58 @@
 package container
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
-var dock = Dock{
-	SaveDir: ".data/ai-docker/",
-	API:     "http://api",
+type mockClient struct {
 }
 
-// https://github.com/wass88/reversi-random/archive/9703d869c9ce2245812ef657cbfe3210a7c33a86.zip
+var cid = "b3cd1a475dded156758005866761de51ee690607"
+
+func (m *mockClient) Do(req *http.Request) (*http.Response, error) {
+	fmt.Printf("%s\n", req.URL.String())
+	body := ioutil.NopCloser(&bytes.Buffer{})
+	return &http.Response{StatusCode: 200, Body: body}, nil
+}
+
+var cont = Cont{
+	SaveDir: "../../.data/ai-docker/",
+	API:     "http://api",
+	Client:  &mockClient{},
+}
+
 var commit = Commit{
 	Github: "wass88/reversi-random",
 	Branch: "master",
-	Commit: "9703d869c9ce2245812ef657cbfe3210a7c33a86",
-	ID:     1,
+	Commit: cid,
 }
 
 func TestSetup(t *testing.T) {
-	id, err := dock.Setup(&commit)
+	err := cont.Setup(commit)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if id.ID != 1 {
-		t.Fatalf("id.ID %d != 1", id.ID)
+}
+
+func TestExec(t *testing.T) {
+	ch := make(chan error, 1)
+	go func() {
+		err := cont.Exec(commit, Resource{CPUPersent: 100, MemoryMB: 256})
+		ch <- err
+	}()
+	select {
+	case err := <-ch:
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Fatal("Not Timeout")
+	case <-time.After(3 * time.Second):
 	}
 }
 
@@ -43,7 +70,7 @@ func TestDownload(t *testing.T) {
 
 func TestDir(t *testing.T) {
 	p := commit.Dir("./dir")
-	e := "dir/wass88___reversi-random___master___9703d869c9ce2245812ef657cbfe3210a7c33a86"
+	e := "dir/wass88.reversi-random.master." + cid
 	if p != e {
 		t.Fatalf("%s is not %s", p, e)
 	}
@@ -51,7 +78,7 @@ func TestDir(t *testing.T) {
 
 func TestGithub(t *testing.T) {
 	p := commit.GithubZip()
-	e := "https://github.com/wass88/reversi-random/archive/9703d869c9ce2245812ef657cbfe3210a7c33a86.zip"
+	e := "https://github.com/wass88/reversi-random/archive/" + cid + ".zip"
 	if p != e {
 		t.Fatalf("\n%s is not \n%s", p, e)
 	}
@@ -59,7 +86,7 @@ func TestGithub(t *testing.T) {
 
 func TestImage(t *testing.T) {
 	p := commit.Image()
-	e := "ai-1"
+	e := "ai.wass88.reversi.random.master:" + cid
 	if p != e {
 		t.Fatalf("%s is not %s", p, e)
 	}

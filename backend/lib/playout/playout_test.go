@@ -14,8 +14,9 @@ import (
 )
 
 func TestPlayout(t *testing.T) {
-	cmd0 := exec.Command("/Users/admin/Documents/reversi-random/target/release/reversi_random")
-	cmd1 := exec.Command("/Users/admin/Documents/reversi-random/target/release/reversi_random")
+	prog := "../../../reversi-random/target/release/reversi_random"
+	cmd0 := exec.Command(prog)
+	cmd1 := exec.Command(prog)
 	sender := &EmptySender{}
 	p0, err := gi.RunWithReadWrite(cmd0)
 	if err != nil {
