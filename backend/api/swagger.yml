@@ -1,0 +1,195 @@
+swagger: '2.0'
+info:
+  title: Game AI
+  version: 1.0.0
+paths:
+  /api/matches/{id}/update:
+    post:
+      description: Post matches result
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+        - {name: token,type: string, in: query, required: true}
+        - name: json
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              record: {type: string}
+              exception: {type: string}
+      responses:
+        200: {description: OK, schema: {type: object,properties:{}}}
+      
+  /api/matches/{id}/complete:
+    post:
+      description: Complete match
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+        - {name: token,type: string, in: query, required: true}
+        - name: json
+          in: body
+          required: true
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                result: {type: integer}
+                exception: {type: string}
+                stderr: {type: string}
+      responses:
+        200: {description: OK, schema: {type: object,properties:{}}}
+
+
+
+  /api/games/{id}/matches:
+    get:
+      description: List of Matches of Game
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+      responses:
+        200:
+          description: Matches
+          schema:
+            type: array
+            items: {$ref: "#/definitions/MatchShort"}
+        
+  /api/matches/{id}:
+    get:
+      description: Description of Match
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+      responses:
+        200:
+          description: Matches
+          schema: {$ref: "#/definitions/Match"}
+  
+  /api/ai/{id}:
+    get:
+      description: Description of AI
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+      responses:
+        200:
+          description: AI with matches
+          schema:
+            type: object
+            properties:
+              ai: {$ref: "#/definitions/AI"}
+              matches:
+                type: array
+                items: {$ref: "#/definitions/Match"}
+          
+  /api/games/{id}/ai-github:
+    get:
+      description: List of AI Github of Game
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+      responses:
+        200:
+          description: List AI Github with latest AI
+          schema:
+            type: array
+            items: 
+              type: object
+              properties:
+                ai_github: {$ref: "#/definitions/AIGithub"}
+                ai: {$ref: "#/definitions/AI"}
+
+  /api/ai-github/{id}:
+    get:
+      description: Description of AI-Github
+      parameters:
+        - {name: id,type: integer, in: path, required: true}
+      responses:
+        200:
+          description: AI-Github with AI
+          schema:
+            type: object
+            properties:
+               ai_github: {$ref: "#/definitions/AIGithub"}
+               ai:
+                 type: array
+                 items: {$ref: "#/definitions/AI"}
+              
+  /api/users:
+    get:
+      description: List of User
+      responses:
+        200:
+          description: List of User
+          schema:
+            type: array
+            items: {$ref: "#/definitions/User"}
+            
+  /api/games:
+    get:
+      description: List of Game
+      responses:
+        200:
+          description: List of Game
+          schema:
+            type: array
+            items: {$ref: "#/definitions/Game"}
+            
+definitions:
+  MatchShort:
+    type: object
+    properties:
+      id: {type: integer, example: 1}
+      game: {$ref: "#/definitions/Game"}
+      state: {type: string, example: "running"}
+      exception: {type: string, example: "exception"}
+      results:
+        type: array
+        items:
+          type: object
+          properties:
+            ai: {$ref: "#/definitions/AI"}
+            result: {type: integer, example: 12}
+            exception: {type: string, example: "exception"}
+              
+  Match:
+    type:  object
+    properties:
+      id: {type: integer, example: 1}
+      game: {$ref: "#/definitions/Game"}
+      state: {type: string, example: "running"}
+      exception: {type: string, example: "exception"}
+      results:
+        type: array
+        items:
+          type: object
+          properties:
+            ai: {$ref: "#/definitions/AI"}
+            result: {type: integer, example: 12}
+            exception: {type: string, example: "exception"}
+            stderr: {type: string, example: "stderr"}
+            
+  AIGithub:
+    type: object
+    properties:
+      id: {type: integer, example: 1}
+      github: {type: string, example: "wass80/reversi-random"}
+      branch: {type: string, example: "master"}
+      user: {$ref: "#/definitions/User"}
+      game: {$ref: "#/definitions/Game"}
+      
+  AI:
+    type: object
+    properties:
+      id: {type: integer, example: 1}
+      commit: {type: string, example: "cccccc"}
+      ai_github: {$ref: "#/definitions/AIGithub"}
+    
+  Game:
+    type: object
+    properties:
+      id: {type: integer, example: 1}
+      name: {type: string, example: "reversi"}
+  
+  User:
+    type: object
+    properties:
+      id: {type: integer, example: 1}
+      name: {type: string, example: "wass80"}
