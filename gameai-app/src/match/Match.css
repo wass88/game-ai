@@ -1,0 +1,36 @@
+.match-list {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.match-id {
+  font-size: 16px;
+  margin: 8px 0;
+}
+.head {
+  font-weight: bold;
+}
+.match {
+  flex: 0 0 180px;
+  width: 180px;
+  margin-bottom: 32px;
+  margin-right: 32px;
+}
+.exception {
+  color: #f5cb42;
+}
+.results {
+  display: table;
+}
+.tr {
+  display: table-row;
+  border-spacing: 8px;
+}
+.score {
+  display: table-cell;
+  padding: 8px;
+  text-align: right;
+}
+.ai {
+  display: table-cell;
+}

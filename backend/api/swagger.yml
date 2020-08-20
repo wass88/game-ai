@@ -52,7 +52,7 @@ paths:
           description: Matches
           schema:
             type: array
-            items: {$ref: "#/definitions/MatchShort"}
+            items: {$ref: "#/definitions/Match"}
         
   /api/matches/{id}:
     get:
@@ -133,23 +133,6 @@ paths:
             items: {$ref: "#/definitions/Game"}
             
 definitions:
-  MatchShort:
-    type: object
-    required: [id, game, state, results, exception]
-    properties:
-      id: {type: integer, example: 1}
-      game: {$ref: "#/definitions/Game"}
-      state: {type: string, example: "running"}
-      exception: {type: string, example: "exception"}
-      results:
-        type: array
-        items:
-          type: object
-          properties:
-            ai: {$ref: "#/definitions/AI"}
-            result: {type: integer, example: 12}
-            exception: {type: string, example: "exception"}
-              
   Match:
     type:  object
     required: [id, game, state, results, exception]
@@ -158,6 +141,7 @@ definitions:
       game: {$ref: "#/definitions/Game"}
       state: {type: string, example: "running"}
       exception: {type: string, example: "exception"}
+      record: {type: string, example: "put 1\n"}
       results:
         type: array
         items:
@@ -199,3 +183,4 @@ definitions:
     properties:
       id: {type: integer, example: 1}
       name: {type: string, example: "wass80"}
+      

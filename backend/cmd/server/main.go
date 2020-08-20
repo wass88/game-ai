@@ -23,6 +23,7 @@ func main() {
 	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
 
 	e.GET("/api/games/:id/matches", server.HandlerViewMatches(db))
+	e.GET("/api/matches/:id", server.HandlerViewMatch(db))
 
 	addr := os.Getenv("LISTEN_ADDR")
 	if addr == "" {

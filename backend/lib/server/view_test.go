@@ -15,3 +15,12 @@ func TestViewMatches(t *testing.T) {
 		t.Logf("%+v", r)
 	}
 }
+
+func TestViewMatch(t *testing.T) {
+	db := mockPlayoutDB()
+	res, err := db.GetMatch(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%+v", res)
+}

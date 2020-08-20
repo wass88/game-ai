@@ -5,6 +5,16 @@ import { useState, useEffect } from "react";
 const Url = "http://localhost:3000";
 
 const API = {
+  async matche(match_id: number): Promise<APIType.Match> {
+    const url = Url + "/api/matches/" + match_id;
+    const resp = await fetch(url);
+    console.log("fetch");
+    if (resp.status !== 200) {
+      throw new Error("Failed call API (" + resp.status + ") " + url);
+    }
+    const data = await resp.json();
+    return data;
+  },
   async matches(game_id: number): Promise<APIType.Match[]> {
     const url = Url + "/api/games/" + game_id + "/matches";
     const resp = await fetch(url);
