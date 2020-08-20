@@ -39,7 +39,6 @@ type AIGithubA struct {
 	Github string
 	Branch string
 }
-type AIGithubID int64
 
 func (db *DB) CreateAIGithub(ai *AIGithubA) (AIGithubID, error) {
 	res, err := db.DB.Exec(`
@@ -148,8 +147,6 @@ func (a AIGithubAct) GetLastCommit() (string, error) {
 	return commit, nil
 }
 
-type AIID int64
-
 func (db *DB) CreateAI(a *AIGithubNeedUpdate) (AIID, error) {
 	res, err := db.DB.Exec(`
 		INSERT INTO ai (state, ai_github_id, commit)
@@ -211,6 +208,7 @@ func (ai *AINeedSetup) KickSetup(db *DB) error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed Update State")
 	}
+	// TODO: Check result
 	err = cmd.Start()
 	if err != nil {
 		return errors.Wrapf(err, "Failed cmd Start: %v", cmd)

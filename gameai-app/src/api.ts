@@ -2,12 +2,13 @@ import * as APIType from "./api-types";
 
 import { useState, useEffect } from "react";
 
-const Url = "http://localhost:8000";
+const Url = "http://localhost:3000";
 
 const API = {
   async matches(game_id: number): Promise<APIType.Match[]> {
     const url = Url + "/api/games/" + game_id + "/matches";
     const resp = await fetch(url);
+    console.log("fetch");
     if (resp.status !== 200) {
       throw new Error("Failed call API (" + resp.status + ") " + url);
     }

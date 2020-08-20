@@ -19,14 +19,18 @@ func mockPlayoutDB() *DB {
 	setupUser(db)
 	setupAI(db)
 	setupPlayout(db)
+	setupPlayoutResult(db)
 	return db
 }
 
 func dropMock(db *DB) {
 	db.DB.MustExec(`DELETE FROM playout_result
-		WHERE playout_result.playout_id = 1`)
+		WHERE playout_result.playout_id = 1
+		OR playout_result.playout_id = 2`)
 	db.DB.MustExec(`DELETE FROM playout_result_ai
-		WHERE playout_result_ai.playout_id = 1`)
+		WHERE playout_result_ai.playout_id = 1
+		OR playout_result_ai.playout_id = 2
+		`)
 	db.DB.MustExec(`DELETE FROM playout_ai
 	    WHERE playout_ai.playout_id = 1 OR playout_ai.ai_id = 1 OR playout_ai.playout_id = 2`)
 	db.DB.MustExec(`DELETE FROM playout_ai
@@ -81,5 +85,32 @@ func setupPlayout(db *DB) {
 	db.DB.MustExec(`
 		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
 		VALUES (2, 2, 1, 1)
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout (id, state, game_id, token)
+		VALUES (2, "completed", 1, "TOKEN2")
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
+		VALUES (3, 1, 2, 1)
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
+		VALUES (4, 2, 2, 0)
+	`)
+}
+
+func setupPlayoutResult(db *DB) {
+	db.DB.MustExec(`
+		INSERT INTO playout_result (playout_id, record, exception)
+		VALUES (1, "rec", "exp")
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)
+		VALUES (0, 1, 1, "stdout1", "exp1")
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)
+		VALUES (1, 1, -1, "stdout1", "exp1")
 	`)
 }

@@ -67,3 +67,14 @@ CREATE TABLE playout_result_ai (
     FOREIGN KEY (playout_id) REFERENCES playout(id),
     UNIQUE (playout_id, turn)
     );
+CREATE TABLE rate_ai {
+    id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
+    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    game_id int NOT NULL,
+    ai_id int NOT NULL,
+    rate double NOT NULL,
+    FOREIGN KEY (game_id) REFERENCES game(id),
+    FOREIGN KEY (ai_id) REFERENCES ai(id),
+    UNIQUE (game_id, ai_id)
+};

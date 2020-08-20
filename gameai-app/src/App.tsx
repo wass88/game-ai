@@ -1,24 +1,43 @@
 import React from "react";
-import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  useParams,
+} from "react-router-dom";
 import Home from "./home/Home";
-import Matches from "./matches/Matches";
+import { MatchesPage } from "./matches/Matches";
 
 import "./App.css";
 
-function hey() {
-  return <p>Hey</p>;
+function Hey() {
+  const { id } = useParams();
+  console.log("Hey");
+  return <p>Hey {id}</p>;
 }
 export default function App() {
   return (
     <Router>
-      <p>Menu</p>
-      <Link to="/hey">Hey</Link>
-      <Link to="/game/1/matches">game</Link>
-      <Switch>
-        <Route path="/" exact component={Home} />
-        <Route path="/hey" component={hey} />
-        <Route path="/game/:id/matches" component={Matches} />
-      </Switch>
+      <div id="outer">
+        <header>
+          <h1>Game AI</h1>
+          <Link to="/game/:id/matches">Matches</Link>
+        </header>
+        <main>
+          <Switch>
+            <Route path="/" exact>
+              <Home />
+            </Route>
+            <Route path="/hey/:id" exact>
+              <Hey />
+            </Route>
+            <Route path="/game/:id/matches" exact>
+              <MatchesPage />
+            </Route>
+          </Switch>
+        </main>
+      </div>
     </Router>
   );
 }

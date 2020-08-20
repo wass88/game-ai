@@ -22,11 +22,16 @@ func main() {
 	e.POST("/api/results/:id/update", server.HandlerResultsUpdate(db))
 	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
 
+	e.GET("/api/games/:id/matches", server.HandlerViewMatches(db))
+
 	addr := os.Getenv("LISTEN_ADDR")
 	if addr == "" {
 		addr = ":3000"
 	}
 
 	fmt.Printf("Listening on %s\n", addr)
-	e.Start(addr)
+	err := e.Start(addr)
+	if err != nil {
+		panic(err)
+	}
 }

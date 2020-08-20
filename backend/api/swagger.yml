@@ -135,6 +135,7 @@ paths:
 definitions:
   MatchShort:
     type: object
+    required: [id, game, state, results, exception]
     properties:
       id: {type: integer, example: 1}
       game: {$ref: "#/definitions/Game"}
@@ -151,6 +152,7 @@ definitions:
               
   Match:
     type:  object
+    required: [id, game, state, results, exception]
     properties:
       id: {type: integer, example: 1}
       game: {$ref: "#/definitions/Game"}
@@ -168,6 +170,7 @@ definitions:
             
   AIGithub:
     type: object
+    required: [id, github, branch, user, game]
     properties:
       id: {type: integer, example: 1}
       github: {type: string, example: "wass80/reversi-random"}
@@ -177,6 +180,7 @@ definitions:
       
   AI:
     type: object
+    required: [id, commit, ai_github]
     properties:
       id: {type: integer, example: 1}
       commit: {type: string, example: "cccccc"}
@@ -184,12 +188,14 @@ definitions:
     
   Game:
     type: object
+    required: [id, name]
     properties:
       id: {type: integer, example: 1}
       name: {type: string, example: "reversi"}
   
   User:
     type: object
+    required: [id, name]
     properties:
       id: {type: integer, example: 1}
       name: {type: string, example: "wass80"}

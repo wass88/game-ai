@@ -23,7 +23,9 @@ db:
 	docker-compose up -d db
 
 dev: target/server
-	MYSQL_DATABASE="root:goodpassword@tcp(127.0.0.1:13306)/dev" ./target/server
+	MYSQL_DATABASE="root:goodpassword@tcp(127.0.0.1:13306)/dev" \
+	LISTEN_ADDR=":8000" \
+	 ./target/server
 
 test:
 	go test -v ./lib/...
