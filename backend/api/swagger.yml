@@ -161,6 +161,10 @@ definitions:
       branch: {type: string, example: "master"}
       user: {$ref: "#/definitions/User"}
       game: {$ref: "#/definitions/Game"}
+      ais: 
+        type: array
+        items: {$ref: "#/definitions/AI"}
+      latest_ai: {$ref: "#/definitions/AI"}
       
   AI:
     type: object
@@ -168,6 +172,7 @@ definitions:
     properties:
       id: {type: integer, example: 1}
       commit: {type: string, example: "cccccc"}
+      state: {type: string}
       ai_github: {$ref: "#/definitions/AIGithub"}
     
   Game:

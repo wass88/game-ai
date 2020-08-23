@@ -15,6 +15,7 @@ func mockCreateAIGithub(t *testing.T, db *DB) AIGithubID {
 	}
 	return id
 }
+
 func TestCreateAIGithub(t *testing.T) {
 	db := mockGameUser()
 	id := mockCreateAIGithub(t, db)

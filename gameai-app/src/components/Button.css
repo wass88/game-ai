@@ -1,0 +1,19 @@
+button {
+  border: 3px double #eee;
+  display: block;
+  cursor: pointer;
+  color: #eee;
+  padding: 16px;
+  margin: 16px 0;
+  width: 100%;
+  border-radius: 2px;
+  font-size: 16px;
+}
+
+button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+button:active {
+  background: rgba(255, 255, 255, 0.4);
+}

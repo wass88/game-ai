@@ -34,6 +34,7 @@ func NewDB(dbname string) *DB {
 	return &DB{db, nil}
 }
 
+type UserID int64
 type UserM struct {
 	ID           int64     `db:"id"`
 	CreatedAt    time.Time `db:"created_at"`
@@ -49,6 +50,7 @@ const (
 	AIGithubIgnore AIGithubUpdating = "ignore"
 )
 
+type AIGithubID int64
 type AIGithubM struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at"`
@@ -69,6 +71,7 @@ const (
 	AIPurged AIState = "purged"
 )
 
+type AIID int64
 type AIM struct {
 	ID         int64     `db:"id"`
 	CreatedAt  time.Time `db:"created_at"`
@@ -78,6 +81,7 @@ type AIM struct {
 	State      AIState   `db:"state"`
 }
 
+type GameID int64
 type GameM struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at"`

@@ -2,3 +2,7 @@
   max-width: 960px;
   margin: 0 auto;
 }
+
+#inner {
+  margin: 0 32px;
+}

@@ -4,10 +4,19 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/wass88/gameai/lib/server"
 )
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
 
 func main() {
 	dbname := os.Getenv("MYSQL_DATABASE")
@@ -18,12 +27,17 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
+	e.Validator = &CustomValidator{validator: validator.New()}
+
 	//e.GET("/hello", handler.MainPage())
 	e.POST("/api/results/:id/update", server.HandlerResultsUpdate(db))
 	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
 
 	e.GET("/api/games/:id/matches", server.HandlerViewMatches(db))
 	e.GET("/api/matches/:id", server.HandlerViewMatch(db))
+	e.GET("/api/games/:id/ai-githubs", server.HandlerViewAIGithubByGame(db))
+
+	e.POST("/api/ai-githubs", server.HandlerAddAIGithub(db))
 
 	addr := os.Getenv("LISTEN_ADDR")
 	if addr == "" {

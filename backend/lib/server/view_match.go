@@ -8,33 +8,29 @@ import (
 	"github.com/pkg/errors"
 )
 
-type GameID int64
-
 type GameR struct {
 	ID   GameID `json:"id"`
 	Name string `json:"name"`
 }
 
-type UserID int64
 type UserR struct {
 	ID   UserID `json:"id"`
 	Name string `json:"name"`
 }
 
-type AIID int64
 type AIR struct {
 	ID       AIID      `json:"id"`
 	Commit   string    `json:"commit"`
 	AIGithub AIGithubR `json:"ai_github"`
 }
 
-type AIGithubID int64
 type AIGithubR struct {
-	ID     AIGithubID `json:"id"`
-	Github string     `json:"github"`
-	Branch string     `json:"branch"`
-	User   UserR      `json:"user"`
-	Game   GameR      `json:"game"`
+	ID       AIGithubID       `json:"id"`
+	Github   string           `json:"github"`
+	Branch   string           `json:"branch"`
+	Updating AIGithubUpdating `json:"updating"`
+	User     UserR            `json:"user"`
+	Game     GameR            `json:"game"`
 }
 
 type MatchID int64

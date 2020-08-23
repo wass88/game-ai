@@ -11,8 +11,10 @@ export function MatchPage() {
 }
 export function Match(match: APIType.Match | null) {
   return (
-    <div>
-      <h1>Match of {match?.game?.name}</h1>
+    <>
+      <Link to={"/games/" + match?.game?.id + "/matches"}>
+        <h1>Match of {match?.game?.name}</h1>
+      </Link>
       <p>{match?.record ?? "<None>"}</p>
       {(() => {
         if (match) return MatchDesc(match);
@@ -26,33 +28,36 @@ export function Match(match: APIType.Match | null) {
           </code>
         </div>
       ))}
-    </div>
+    </>
   );
 }
 
 export function MatchDesc(match: APIType.Match) {
   return (
-    <Link to={"/matches/" + match.id}>
-      <div className="match" key={match.id}>
-        <p className="head">
-          [{match.state}] {match.id}
-        </p>
-        {(() => {
-          if (match.exception !== "")
-            return <p className="exception">{match.exception}</p>;
-          return;
-        })()}
-        <div className="results">
-          {match.results?.map((result, i) => (
-            <div className="tr" key={i}>
-              <p className="score">{result.result ?? "??"}</p>
-              <p className="ai">
-                {result.ai?.ai_github?.github} ({result.ai?.ai_github?.branch})
-              </p>
-            </div>
-          ))}
+    <React.Fragment key={match.id}>
+      <Link to={"/matches/" + match.id}>
+        <div className="match">
+          <p className="head">
+            [{match.state}] {match.id}
+          </p>
+          {(() => {
+            if (match.exception !== "")
+              return <p className="exception">{match.exception}</p>;
+            return;
+          })()}
+          <div className="results">
+            {match.results?.map((result, i) => (
+              <div className="tr" key={i}>
+                <p className="score">{result.result ?? "??"}</p>
+                <p className="ai">
+                  {result.ai?.ai_github?.github} ({result.ai?.ai_github?.branch}
+                  )
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </React.Fragment>
   );
 }

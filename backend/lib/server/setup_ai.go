@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os/exec"
 
+	"github.com/labstack/echo"
 	"github.com/pkg/errors"
 )
 
@@ -33,11 +34,35 @@ func (db *DB) KickSetupAI() error {
 	return nil
 }
 
+func HandlerAddAIGithub(db *DB) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		var req AIGithubA
+		err := c.Bind(&req)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid json %v", err))
+		}
+		err = c.Validate(&req)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed validation json %v", err))
+		}
+		res, err := db.CreateAIGithub(&req)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed db create %v", err))
+		}
+
+		type Result struct {
+			AIGithubID int64 `json:"ai_github_id"`
+		}
+
+		return c.JSON(http.StatusOK, Result{(int64)(res)})
+	}
+}
+
 type AIGithubA struct {
-	GameID int64
-	UserID int64
-	Github string
-	Branch string
+	GameID int64  `json:"game_id" validate:"required""`
+	UserID int64  `json:"user_id" validate:"required"`
+	Github string `json:"github" validate:"required"`
+	Branch string `json:"branch" validate:"required"`
 }
 
 func (db *DB) CreateAIGithub(ai *AIGithubA) (AIGithubID, error) {

@@ -9,6 +9,7 @@ export interface AI {
      * cccccc
      */
     commit: string;
+    state?: string;
     ai_github: AIGithub;
 }
 export interface AIGithub {
@@ -29,6 +30,8 @@ export interface AIGithub {
     branch: string;
     user: User;
     game: Game;
+    ais?: AI[];
+    latest_ai?: AI;
 }
 export interface Game {
     /**

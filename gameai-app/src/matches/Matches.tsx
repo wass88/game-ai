@@ -18,9 +18,9 @@ export function Matches(matches: APIType.Match[] | null) {
     body = <div className="match-list">{matchList}</div>;
   }
   return (
-    <div>
+    <>
       {" "}
       {head} {body}
-    </div>
+    </>
   );
 }

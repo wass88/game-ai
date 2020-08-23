@@ -1,0 +1,1 @@
+migrate -path ./migrations -database 'mysql://root:goodpassword@tcp(127.0.0.1:13306)/dev' up

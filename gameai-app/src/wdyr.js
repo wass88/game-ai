@@ -5,5 +5,4 @@ if (process.env.NODE_ENV === "development") {
   whyDidYouRender(React, {
     trackAllPureComponents: true,
   });
-  console.log("loaddied");
 }
