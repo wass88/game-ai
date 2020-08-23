@@ -19,17 +19,25 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 }
 
 func main() {
-	dbname := os.Getenv("MYSQL_DATABASE")
-	db := server.NewDB(dbname)
+	addr := os.Getenv("LISTEN_ADDR")
+	if addr == "" {
+		addr = ":3000"
+	}
+
+	confFile := os.Getenv("CONF_FILE")
+	conf, err := server.LoadConfig(confFile)
+	if err != nil {
+		panic(err)
+	}
+
+	db := conf.NewDB()
 
 	e := echo.New()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	//e.GET("/hello", handler.MainPage())
 	e.POST("/api/results/:id/update", server.HandlerResultsUpdate(db))
 	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
 
@@ -39,13 +47,11 @@ func main() {
 
 	e.POST("/api/ai-githubs", server.HandlerAddAIGithub(db))
 
-	addr := os.Getenv("LISTEN_ADDR")
-	if addr == "" {
-		addr = ":3000"
-	}
+	db.SetSessionHandler(e)
+	e.GET("/api/you", server.HandlerYou(db))
 
 	fmt.Printf("Listening on %s\n", addr)
-	err := e.Start(addr)
+	err = e.Start(addr)
 	if err != nil {
 		panic(err)
 	}

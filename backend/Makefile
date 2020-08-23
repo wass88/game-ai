@@ -23,7 +23,7 @@ db:
 	docker-compose up -d db
 
 dev: target/server
-	MYSQL_DATABASE="root:goodpassword@tcp(127.0.0.1:13306)/dev" \
+	CONF_FILE=./configs/server.json \
 	LISTEN_ADDR=":8000" \
 	 ./target/server
 

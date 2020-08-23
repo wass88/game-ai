@@ -3,27 +3,19 @@ package server
 import (
 	"time"
 
+	"github.com/dghubble/sessions"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
 type DB struct {
-	DB     *sqlx.DB
-	Config *Config
+	DB          *sqlx.DB
+	CookieStore *sessions.CookieStore
+	Config      *Config
 }
 
-type Config struct {
-	AIRunner AIRunnerConf
-}
-
-type AIRunnerConf struct {
-	Cmd string
-	API string
-	Dir string
-}
-
-func NewDB(dbname string) *DB {
-	db, err := sqlx.Open("mysql", dbname)
+func (c *Config) NewDB() *DB {
+	db, err := sqlx.Open("mysql", c.DBName)
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +23,9 @@ func NewDB(dbname string) *DB {
 	if err != nil {
 		panic(err)
 	}
-	return &DB{db, nil}
+
+	cookieStore := sessions.NewCookieStore([]byte(c.Session.SessionSecret), nil)
+	return &DB{db, cookieStore, c}
 }
 
 type UserID int64

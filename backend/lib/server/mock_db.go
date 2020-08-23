@@ -2,7 +2,8 @@ package server
 
 func getDB() *DB {
 	dbname := `root:goodpassword@tcp(127.0.0.1:13306)/dev`
-	return NewDB(dbname)
+	conf := Config{DBName: dbname}
+	return conf.NewDB()
 }
 
 func mockGameUser() *DB {

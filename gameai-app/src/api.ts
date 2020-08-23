@@ -4,54 +4,59 @@ import { useState, useEffect } from "react";
 
 const Url = "http://localhost:3000";
 
+async function fetch_with_cookie(
+  method: string,
+  path: string,
+  body: any
+): Promise<any> {
+  const url = Url + path;
+  const conf: any = {
+    method: method,
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin" as "same-origin",
+  };
+  if (method === "POST") {
+    conf.body = JSON.stringify(body);
+  }
+
+  const resp = await fetch(url, conf);
+  if (resp.status !== 200) {
+    throw new Error("Failed call API (" + resp.status + ") " + url);
+  }
+  const data = await resp.json();
+  console.log("Data", data);
+  return data;
+}
+
 const API = {
+  async you(): Promise<any> {
+    return fetch_with_cookie("GET", "/api/you", {});
+  },
   async post_ai_github(
     game_id: number,
     user_id: number,
     github: string,
     branch: string
   ): Promise<{ ai_github_id: number }> {
-    const url = Url + "/api/ai-githubs";
-    const body = { game_id, user_id, github, branch };
-    const conf = {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    };
-
-    const resp = await fetch(url, conf);
-    if (resp.status !== 200) {
-      throw new Error("Failed call API (" + resp.status + ") " + url);
-    }
-    const data = await resp.json();
-    return data;
+    return fetch_with_cookie("POST", "/api/ai-githubs", {
+      game_id,
+      user_id,
+      github,
+      branch,
+    });
   },
   async ai_githubs(game_id: number): Promise<APIType.AIGithub[]> {
-    const url = Url + "/api/games/" + game_id + "/ai-githubs";
-    const resp = await fetch(url);
-    if (resp.status !== 200) {
-      throw new Error("Failed call API (" + resp.status + ") " + url);
-    }
-    const data = await resp.json();
-    return data;
+    return fetch_with_cookie(
+      "GET",
+      "/api/games/" + game_id + "/ai-githubs",
+      {}
+    );
   },
   async matche(match_id: number): Promise<APIType.Match> {
-    const url = Url + "/api/matches/" + match_id;
-    const resp = await fetch(url);
-    if (resp.status !== 200) {
-      throw new Error("Failed call API (" + resp.status + ") " + url);
-    }
-    const data = await resp.json();
-    return data;
+    return fetch_with_cookie("GET", "/api/matches/" + match_id, {});
   },
   async matches(game_id: number): Promise<APIType.Match[]> {
-    const url = Url + "/api/games/" + game_id + "/matches";
-    const resp = await fetch(url);
-    if (resp.status !== 200) {
-      throw new Error("Failed call API (" + resp.status + ") " + url);
-    }
-    const data = await resp.json();
-    return data;
+    return fetch_with_cookie("GET", "/api/games/" + game_id + "/matches", {});
   },
   useAPI<P extends any[], T>(
     api: (...args: P) => Promise<T>,
