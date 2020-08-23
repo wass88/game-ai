@@ -20,25 +20,29 @@ func mockPlayoutDB() *DB {
 	setupUser(db)
 	setupAI(db)
 	setupPlayout(db)
+	return db
+}
+func mockPlayoutResultDB() *DB {
+	db := getDB()
+	dropMock(db)
+	setupGame(db)
+	setupUser(db)
+	setupAI(db)
+	setupPlayout(db)
 	setupPlayoutResult(db)
 	return db
 }
 
 func dropMock(db *DB) {
 	db.DB.MustExec(`DELETE FROM playout_result
-		WHERE playout_result.playout_id = 1
-		OR playout_result.playout_id = 2`)
+		WHERE playout_id IN (SELECT id FROM playout WHERE game_id = 1)`)
 	db.DB.MustExec(`DELETE FROM playout_result_ai
-		WHERE playout_result_ai.playout_id = 1
-		OR playout_result_ai.playout_id = 2
-		`)
-	db.DB.MustExec(`DELETE FROM playout_ai
-	    WHERE playout_ai.playout_id = 1 OR playout_ai.ai_id = 1 OR playout_ai.playout_id = 2`)
+		WHERE playout_id IN (SELECT id FROM playout WHERE game_id = 1)`)
 	db.DB.MustExec(`DELETE FROM playout_ai
 	    WHERE playout_id IN
 			(SELECT id FROM playout WHERE game_id = 1)
 		`)
-	db.DB.MustExec(`DELETE FROM playout WHERE id = 1 OR game_id = 1`)
+	db.DB.MustExec(`DELETE FROM playout WHERE game_id = 1`)
 	db.DB.MustExec(`DELETE FROM ai
 		WHERE ai_github_id
 		IN (SELECT id FROM ai_github WHERE game_id = 1)`)

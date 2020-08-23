@@ -157,11 +157,12 @@ func TestSetupCmd(t *testing.T) {
 func TestKickAI(t *testing.T) {
 	db := mockGameUser()
 	_ = createAI(db, t)
-	db.Config = &Config{AIRunnerConf{
+	db.Config = &Config{}
+	db.Config.AIRunner = AIRunnerConf{
 		API: "http://api",
 		Dir: "../../.data",
 		Cmd: "../../target/container",
-	}}
+	}
 	_ = createAI(db, t)
 	err := db.KickSetupAI()
 	if err != nil {
