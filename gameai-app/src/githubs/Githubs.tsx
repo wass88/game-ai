@@ -72,7 +72,7 @@ export function PopupGithub(
     (async () => {
       if (!post) return;
       setSending(true);
-      const resp = await API.post_ai_github(1, 1, github, branch);
+      const resp = await API.post_ai_github(1, github, branch);
       setSending(false);
       history.push(`/ai/${resp.ai_github_id}`);
     })();

@@ -36,8 +36,17 @@ func (db *DB) KickSetupAI() error {
 
 func HandlerAddAIGithub(db *DB) func(c echo.Context) error {
 	return func(c echo.Context) error {
-		var req AIGithubA
-		err := c.Bind(&req)
+		s, err := db.GetSession(c)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Session Error %s", err))
+		}
+		id := s.ID
+		var req struct {
+			GameID int64  `json:"game_id" validate:"required""`
+			Github string `json:"github" validate:"required"`
+			Branch string `json:"branch" validate:"required"`
+		}
+		err = c.Bind(&req)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid json %v", err))
 		}
@@ -45,7 +54,14 @@ func HandlerAddAIGithub(db *DB) func(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed validation json %v", err))
 		}
-		res, err := db.CreateAIGithub(&req)
+		github := AIGithubA{
+			UserID: id,
+			GameID: req.GameID,
+			Github: req.Github,
+			Branch: req.Branch,
+		}
+		fmt.Printf("Create %s", github)
+		res, err := db.CreateAIGithub(&github)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed db create %v", err))
 		}
@@ -59,10 +75,10 @@ func HandlerAddAIGithub(db *DB) func(c echo.Context) error {
 }
 
 type AIGithubA struct {
-	GameID int64  `json:"game_id" validate:"required""`
-	UserID int64  `json:"user_id" validate:"required"`
-	Github string `json:"github" validate:"required"`
-	Branch string `json:"branch" validate:"required"`
+	GameID int64
+	UserID UserID
+	Github string
+	Branch string
 }
 
 func (db *DB) CreateAIGithub(ai *AIGithubA) (AIGithubID, error) {

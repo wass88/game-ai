@@ -59,8 +59,8 @@ func setupGame(db *DB) {
 }
 func setupUser(db *DB) {
 	db.DB.MustExec(`
-		INSERT INTO user (id, name, twitter_token)
-		VALUE (1, "test_user", "test_token")`)
+		INSERT INTO user (id, name, github_name, authority)
+		VALUE (1, "test_user", "test_github", "admin")`)
 }
 
 func setupAI(db *DB) {

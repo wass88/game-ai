@@ -29,18 +29,19 @@ async function fetch_with_cookie(
 }
 
 const API = {
+  async logout(): Promise<void> {
+    return fetch_with_cookie("POST", "/github/logout", {});
+  },
   async you(): Promise<any> {
     return fetch_with_cookie("GET", "/api/you", {});
   },
   async post_ai_github(
     game_id: number,
-    user_id: number,
     github: string,
     branch: string
   ): Promise<{ ai_github_id: number }> {
     return fetch_with_cookie("POST", "/api/ai-githubs", {
       game_id,
-      user_id,
       github,
       branch,
     });
