@@ -9,17 +9,18 @@ import (
 )
 
 type CmdRW struct {
-	buf    *bufio.ReadWriter
+	in     io.Writer
+	out    *bufio.Reader
 	stderr []byte
 }
 
 func (r *CmdRW) WriteLn(s string) error {
-	_, err := r.buf.WriteString(s + "\n")
+	fmt.Printf("--> %s\n", s)
+	_, err := io.WriteString(r.in, s+"\n")
 	if err != nil {
 		return err
 	}
-	err = r.buf.Flush()
-	return err
+	return nil
 }
 func (r *CmdRW) ReadLn() (string, error) {
 	l := []byte{}
@@ -27,12 +28,13 @@ func (r *CmdRW) ReadLn() (string, error) {
 	p := true
 	var err error
 	for p {
-		c, p, err = r.buf.ReadLine()
+		c, p, err = r.out.ReadLine()
 		if err != nil {
 			return "", err
 		}
 		l = append(l, c...)
 	}
+	fmt.Printf("<-- %s\n", string(l))
 	return string(l), nil
 }
 
@@ -50,8 +52,7 @@ func RunWithReadWrite(c *exec.Cmd) (*CmdRW, error) {
 	if err != nil {
 		return nil, err
 	}
-	b := bufio.NewReadWriter(bufio.NewReader(out), bufio.NewWriter(in))
-	res := &CmdRW{buf: b, stderr: []byte{}}
+	res := &CmdRW{out: bufio.NewReader(out), in: in, stderr: []byte{}}
 	go func() {
 		b := make([]byte, 1024)
 		for {

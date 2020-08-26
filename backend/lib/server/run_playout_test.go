@@ -46,17 +46,17 @@ func TestGetOldestPlayout(t *testing.T) {
 	if task.Game != "reversi" {
 		t.Fatalf("%s is not reversi", task.Game)
 	}
-	if task.PlayoutID.ID != 1 {
-		t.Fatalf("%d is not 1", task.PlayoutID.ID)
+	if task.PlayoutID.ID != 2 {
+		t.Fatalf("%d is not 2", task.PlayoutID.ID)
 	}
 	if task.Token != "TOKEN" {
 		t.Fatalf("%s is not TOKEN", task.Token)
 	}
-	if task.Players[0] != 1 {
-		t.Fatalf("%d is not 1", task.Players[0])
+	if task.Players[0].ID != 2 {
+		t.Fatalf("%v is not 2", task.Players[0])
 	}
-	if task.Players[1] != 2 {
-		t.Fatalf("%d is not 2", task.Players[2])
+	if task.Players[1].ID != 2 {
+		t.Fatalf("%v is not 2", task.Players[1])
 	}
 }
 

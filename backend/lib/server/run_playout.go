@@ -2,8 +2,10 @@ package server
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -11,7 +13,21 @@ import (
 )
 
 func (db *DB) KickPlayout() error {
-	panic("not implemented")
+	fmt.Printf("[Playout] Start\n")
+	t, err := db.GetOldestTask()
+	if err != nil {
+		return errors.Wrapf(err, "Kick Playout")
+	}
+	if t == nil {
+		fmt.Printf("[Playout] No Task\n")
+		return nil
+	}
+	err = t.SpownPlayout(db.Config)
+	if err != nil {
+		return errors.Wrapf(err, "Failed Playout %v", err)
+	}
+	fmt.Printf("[Playout] Complated")
+	return nil
 }
 
 func GetPlayoutIDAndCheckToken(c echo.Context, db *DB) (*PlayoutID, error) {
@@ -100,31 +116,47 @@ func (db *DB) NewPlayout(gameID int64, aiIDs []int64) (*PlayoutID, error) {
 	return &PlayoutID{playoutID, db}, nil
 }
 
+type PlayerCmd struct {
+	ID     AIID
+	Github string
+	Branch string
+	Commit string
+}
 type PlayoutTask struct {
 	PlayoutID PlayoutID
 	Token     string
 	Game      string
-	Players   []int64
-}
-
-type PlayoutTaskM struct {
-	PlayoutID int64  `db:"playout_id"`
-	Token     string `db:"token"`
-	Game      string `db:"game"`
-	Player    int64  `db:"player"`
+	Players   []PlayerCmd
 }
 
 func (db *DB) GetOldestTask() (*PlayoutTask, error) {
-	ais := []PlayoutTaskM{}
+	ais := []struct {
+		PlayoutID int64  `db:"playout_id"`
+		Token     string `db:"token"`
+		Game      string `db:"game"`
+		AIID      AIID   `db:"ai_id"`
+		Github    string `db:"github"`
+		Branch    string `db:"branch"`
+		Commit    string `db:"commit"`
+	}{}
 	err := db.DB.Select(&ais, `
-		SELECT p.id AS playout_id, p.token AS token, p.name AS game, playout_ai.id AS player FROM
-			(SELECT playout.id, playout.token, game.name
-		FROM playout
-		INNER JOIN game ON game.id = playout.game_id
-		WHERE playout.state = "ready"
-		ORDER BY playout.created_at DESC
-		LIMIT 1) AS p
+		SELECT p.id AS playout_id, p.token AS token, p.name AS game,
+		playout_ai.ai_id AS ai_id, ai.commit AS commit,
+		ai_github.branch AS branch, ai_github.github AS github
+		FROM
+		(SELECT playout.id, playout.token, game.name
+			FROM playout
+			INNER JOIN game ON game.id = playout.game_id
+			INNER JOIN playout_ai ON playout_ai.playout_id = playout.id
+			INNER JOIN ai ON ai.id = playout_ai.ai_id
+			WHERE playout.state = "ready"
+			GROUP BY playout.id
+			HAVING min(ai.state) = max(ai.state) AND max(ai.state) = "ready"
+			ORDER BY playout.created_at DESC
+			LIMIT 1) AS p
 		INNER JOIN playout_ai ON playout_ai.playout_id = p.id
+		INNER JOIN ai ON ai.id = playout_ai.ai_id
+		INNER JOIN ai_github ON ai_github.id = ai.ai_github_id
 		ORDER BY playout_ai.turn ASC
 	`)
 	if err != nil {
@@ -133,13 +165,12 @@ func (db *DB) GetOldestTask() (*PlayoutTask, error) {
 	if len(ais) == 0 {
 		return nil, nil
 	}
-	players := []int64{}
+	players := []PlayerCmd{}
 	for _, ai := range ais {
-		players = append(players, ai.Player)
+		players = append(players, PlayerCmd{ai.AIID, ai.Github, ai.Branch, ai.Commit})
 	}
-
 	res := PlayoutTask{
-		PlayoutID{ais[0].Player, db},
+		PlayoutID{ais[0].PlayoutID, db},
 		ais[0].Token,
 		ais[0].Game,
 		players,
@@ -158,9 +189,18 @@ func (p *PlayoutID) Run() error {
 	return nil
 }
 
-func (t *PlayoutTask) SpownPlayout(runner RunnerConf) {
-	t.PlayoutID.Run()
-	runner.Run(*t)
+func (t *PlayoutTask) SpownPlayout(c *Config) error {
+	err := t.PlayoutID.Run()
+	if err != nil {
+		return errors.Wrapf(err, "Update DB Run playout")
+	}
+	cmd := t.Cmd(c)
+	fmt.Printf("playout cmd = %v", strings.Join(cmd.Args, `, `))
+	err = cmd.Run()
+	if err != nil {
+		return errors.Wrapf(err, "Faild Run %v", cmd.Args)
+	}
+	return nil
 }
 
 func (r *PlayoutID) ValidateToken(token string) (bool, error) {

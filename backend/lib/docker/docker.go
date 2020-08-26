@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types"
 	cont "github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/pkg/errors"
 )
 
@@ -81,37 +82,24 @@ func (d *Docker) Run(c context.Context, image string, cpuPersent, memoryMB int64
 	}
 
 	hijk, err := d.Client.ContainerAttach(c, container.ID,
-		types.ContainerAttachOptions{Stream: true, Stdin: true})
+		types.ContainerAttachOptions{Stream: true, Stdin: true, Stdout: true, Stderr: true})
 	if err != nil {
 		return errors.Wrapf(err, "On Stdin")
 	}
 	defer hijk.Conn.Close()
 	defer hijk.Close()
-	go func(hijk types.HijackedResponse) {
-		io.Copy(hijk.Conn, os.Stdin)
-	}(hijk)
-
-	hijk, err = d.Client.ContainerAttach(c, container.ID,
-		types.ContainerAttachOptions{Stream: true, Stdout: true})
-	if err != nil {
-		return errors.Wrapf(err, "On Stdout")
-	}
-	defer hijk.Conn.Close()
-	defer hijk.Close()
-	go func(hijk types.HijackedResponse) {
-		io.Copy(os.Stdout, hijk.Conn)
-	}(hijk)
-
-	hijk, err = d.Client.ContainerAttach(c, container.ID,
-		types.ContainerAttachOptions{Stream: true, Stderr: true})
-	if err != nil {
-		return errors.Wrapf(err, "On Stderr")
-	}
-	defer hijk.Conn.Close()
-	defer hijk.Close()
-	go func(hijk types.HijackedResponse) {
-		io.Copy(os.Stderr, hijk.Conn)
-	}(hijk)
+	go func() {
+		_, err := io.Copy(hijk.Conn, os.Stdin)
+		if err != nil {
+			panic(err)
+		}
+	}()
+	go func() {
+		_, err := stdcopy.StdCopy(os.Stdout, os.Stdin, hijk.Conn)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	_, err = d.Client.ContainerWait(c, container.ID)
 	if err != nil {

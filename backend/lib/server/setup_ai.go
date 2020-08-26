@@ -12,26 +12,57 @@ import (
 )
 
 func (db *DB) KickSetupAI() error {
+	fmt.Printf("[Setup AI]Start\n")
 	ain, err := db.FindAIGithubNeedUpdate()
 	if err != nil {
-		return errors.Wrapf(err, "Faild FindAIGithubNeedUpdate")
+		return errors.Wrapf(err, "[Setup AI] Faild FindAIGithubNeedUpdate")
 	}
 	for _, ai := range ain {
+		fmt.Printf("[Setup AI] Regiter AI %v\n", ai)
 		db.CreateAI(&ai)
 	}
 
 	ais, err := db.GetNeedSetupAI()
 	if err != nil {
-		return errors.Wrapf(err, "Failed GetNeedSetupAI")
+		return errors.Wrapf(err, "[Setup AI] Failed GetNeedSetupAI")
+	}
+	if len(ais) == 0 {
+		fmt.Printf("[Setup AI] No AI to need to update\n")
 	}
 	for _, ai := range ais {
+		fmt.Printf("[Setup AI] Kick Create AI %v\n", ai)
 		err := ai.KickSetup(db)
 		if err != nil {
 			return errors.Wrapf(err, "Failed KickSetup")
 		}
+		fmt.Printf("[Setup AI] Done Create AI %v\n", ai)
 		break
 	}
 	return nil
+}
+
+func HandlerReadyContainer(db *DB) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		var req struct {
+			Github string `json:"github"`
+			Branch string `json:"branch"`
+			Commit string `json:"commit"`
+		}
+		err := c.Bind(&req)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid json %v", err))
+		}
+		err = c.Validate(&req)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed validation json %v", err))
+		}
+
+		err = db.ReadyContianersByCommit(req.Github, req.Branch, req.Commit)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed db %v", err))
+		}
+		return nil
+	}
 }
 
 func HandlerAddAIGithub(db *DB) func(c echo.Context) error {
@@ -60,7 +91,6 @@ func HandlerAddAIGithub(db *DB) func(c echo.Context) error {
 			Github: req.Github,
 			Branch: req.Branch,
 		}
-		fmt.Printf("Create %s", github)
 		res, err := db.CreateAIGithub(&github)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Failed db create %v", err))
@@ -109,7 +139,7 @@ func (db *DB) GetActiveAI() ([]AIGithubAct, error) {
 	err := db.DB.Select(&res, `
 		SELECT github, branch, id,
 			ifnull((SELECT commit FROM ai
-				WHERE id = ai_github.id
+				WHERE ai_github_id = ai_github.id
 				ORDER BY created_at DESC
 				LIMIT 1),"") AS last_commit
 		FROM ai_github
@@ -137,9 +167,10 @@ func (db *DB) FindAIGithubNeedUpdate() ([]AIGithubNeedUpdate, error) {
 	for _, a := range ai {
 		commit, err := a.GetLastCommit()
 		if err != nil {
-			return nil, errors.Wrapf(err, "Failed Get LastCommit")
+			fmt.Printf("Failed Get LastCommit %v\n", err)
+			continue
 		}
-
+		fmt.Printf("Current: %#v\n%s\n%s\n", a, a.LastAICommit, commit)
 		if a.LastAICommit != commit {
 			n := AIGithubNeedUpdate{
 				Github: a.Github,
@@ -243,6 +274,19 @@ func (a *AIID) UpdateState(db *DB, state AIState) error {
 	return nil
 }
 
+func (db *DB) ReadyContianersByCommit(github, branch, commit string) error {
+	_, err := db.DB.Exec(`
+		UPDATE ai
+		INNER JOIN ai_github AS g ON g.id = ai.ai_github_id
+		SET ai.state = "ready"
+		WHERE commit = ? AND g.branch = ? AND g.github = ?
+	`, commit, branch, github)
+	if err != nil {
+		return errors.Wrapf(err, "Update States")
+	}
+	return nil
+}
+
 func (ai *AINeedSetup) KickSetup(db *DB) error {
 	cmd := ai.SetupCmd(db.Config.AIRunner)
 	err := ai.ID.UpdateState(db, "setup")
@@ -250,7 +294,7 @@ func (ai *AINeedSetup) KickSetup(db *DB) error {
 		return errors.Wrapf(err, "Failed Update State")
 	}
 	// TODO: Check result
-	err = cmd.Start()
+	err = cmd.Run()
 	if err != nil {
 		return errors.Wrapf(err, "Failed cmd Start: %v", cmd)
 	}

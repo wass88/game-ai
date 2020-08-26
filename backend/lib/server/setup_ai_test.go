@@ -125,6 +125,14 @@ func TestUpdateStateAI(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+func TestReadyStateAI(t *testing.T) {
+	db := mockGameUser()
+	_ = createAI(db, t)
+	err := db.ReadyContianersByCommit("git_addr", "master", "000001")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestSetupCmd(t *testing.T) {
 	a := AINeedSetup{

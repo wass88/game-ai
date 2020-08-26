@@ -38,6 +38,8 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Validator = &CustomValidator{validator: validator.New()}
 
+	// Change Listen port
+	e.POST("/api/container/ready", server.HandlerReadyContainer(db))
 	e.POST("/api/results/:id/update", server.HandlerResultsUpdate(db))
 	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
 

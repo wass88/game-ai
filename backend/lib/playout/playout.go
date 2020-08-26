@@ -134,7 +134,7 @@ func ParsePlayoutSender(s string, client HttpClient) (gi.IPlayoutSender, error) 
 	if s == "" {
 		return &EmptySender{}, nil
 	}
-	sp := strings.Split(s, "!")
+	sp := strings.Split(s, "@")
 	if len(sp) != 3 {
 		return nil, errors.Errorf("Send format is invalied: %s", s)
 	}

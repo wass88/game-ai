@@ -54,7 +54,7 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 func TestParseSender(t *testing.T) {
-	sender, err := ParsePlayoutSender("http://xxx!1!TOKEN", &mockClient{})
+	sender, err := ParsePlayoutSender("http://xxx@1@TOKEN", &mockClient{})
 	if err != nil {
 		t.Fatal(err)
 	}

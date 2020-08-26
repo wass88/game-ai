@@ -71,11 +71,11 @@ func setupAI(db *DB) {
 		INSERT INTO ai_github (id, game_id, user_id, github, branch)
 		VALUE (2, 1, 1, "git_addr", "super")`)
 	db.DB.MustExec(`
-		INSERT INTO ai (id, ai_github_id, commit)
-		VALUE (1, 1, "000001")`)
+		INSERT INTO ai (id, ai_github_id, commit, state)
+		VALUE (1, 1, "000001", "found")`)
 	db.DB.MustExec(`
-		INSERT INTO ai (id, ai_github_id, commit)
-		VALUE (2, 2, "000002")`)
+		INSERT INTO ai (id, ai_github_id, commit, state)
+		VALUE (2, 2, "000002", "ready")`)
 }
 
 func setupPlayout(db *DB) {
@@ -93,15 +93,27 @@ func setupPlayout(db *DB) {
 	`)
 	db.DB.MustExec(`
 		INSERT INTO playout (id, state, game_id, token)
-		VALUES (2, "completed", 1, "TOKEN2")
+		VALUES (2, "ready", 1, "TOKEN")
 	`)
 	db.DB.MustExec(`
 		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
-		VALUES (3, 1, 2, 1)
+		VALUES (5, 2, 2, 0)
 	`)
 	db.DB.MustExec(`
 		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
-		VALUES (4, 2, 2, 0)
+		VALUES (6, 2, 2, 1)
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout (id, state, game_id, token)
+		VALUES (3, "completed", 1, "TOKEN2")
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
+		VALUES (3, 1, 3, 1)
+	`)
+	db.DB.MustExec(`
+		INSERT INTO playout_ai (id, ai_id, playout_id, turn)
+		VALUES (4, 2, 3, 0)
 	`)
 }
 

@@ -8,14 +8,21 @@ import (
 
 type Config struct {
 	AIRunner AIRunnerConf `json:"ai_runner"`
+	Playout  PlayoutConf  `json:"playout"`
 	Session  SessionConf  `json:"session"`
 	DBName   string       `json:"db_name"`
 }
 
 type AIRunnerConf struct {
+	Cmd   string `json:"cmd"`
+	API   string `json:"api"`
+	Dir   string `json:"dir"`
+	CPU   int    `json:"cpu"`
+	MemMB int    `json:"mem_mb"`
+}
+type PlayoutConf struct {
 	Cmd string `json:"cmd"`
 	API string `json:"api"`
-	Dir string `json:"dir"`
 }
 
 type SessionConf struct {
