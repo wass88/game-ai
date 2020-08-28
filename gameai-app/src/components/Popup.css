@@ -1,0 +1,19 @@
+.popup {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup > div {
+  padding: 32px;
+  background: #222;
+  border: 1px double #eee;
+  border-radius: 2px;
+}

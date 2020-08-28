@@ -83,3 +83,14 @@ func TestCheckToken(t *testing.T) {
 		t.Fatalf("Token is not expected")
 	}
 }
+
+func TestCreatePlayout(t *testing.T) {
+	db := mockPlayoutDB()
+	id, err := db.CreatePlayout(1, []AIID{1, 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if id < 0 {
+		t.Fatalf("id %d < 0 ", id)
+	}
+}

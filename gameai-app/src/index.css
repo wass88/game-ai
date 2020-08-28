@@ -50,6 +50,10 @@ a:hover {
   color: inherit;
 }
 
+a.no-line {
+  text-decoration: none;
+}
+
 a:hover {
   background: rgba(255, 255, 255, 0.1);
 }

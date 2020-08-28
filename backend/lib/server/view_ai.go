@@ -38,8 +38,23 @@ func HandlerViewAIGithubByGame(db *DB) func(c echo.Context) error {
 		}
 		return c.JSON(http.StatusOK, res)
 	}
-
 }
+
+func HandlerViewLatestByGame(db *DB) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		idp := c.Param("id")
+		id, err := strconv.Atoi(idp)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
+		}
+		res, err := db.GetLatestAIByGame((GameID)(id))
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "failed db select")
+		}
+		return c.JSON(http.StatusOK, res)
+	}
+}
+
 func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 	type Result struct {
 		ID       AIGithubID       `db:"id"`
@@ -97,6 +112,30 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 			}
 		}
 		res = append(res, aig)
+	}
+	return res, nil
+}
+
+type AIShortInfo struct {
+	ID     AIID   `db:"id" json:"id"`
+	Github string `db:"github" json:"github"`
+	Branch string `db:"branch" json:"branch"`
+	Commit string `db:"commit" json:"commti"`
+}
+
+func (db *DB) GetLatestAIByGame(id GameID) ([]AIShortInfo, error) {
+	var res []AIShortInfo
+	err := db.DB.Select(&res, `
+		SELECT ai.id AS id, ai.commit AS commit, g.github AS github, g.branch AS branch
+		FROM ai
+		LEFT JOIN ai AS b ON (ai.created_at < b.created_at AND ai.ai_github_id = b.ai_github_id)
+		INNER JOIN ai_github AS g ON g.id = ai.ai_github_id
+		WHERE ai.state = "ready"
+		AND g.game_id = ?
+		AND b.created_at IS NULL
+	`, id)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed select game %d", id)
 	}
 	return res, nil
 }

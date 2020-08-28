@@ -82,8 +82,42 @@ func HandlerResultsComplete(db *DB) func(c echo.Context) error {
 		return c.String(http.StatusOK, "")
 	}
 }
+func HandlerAddMatch(db *DB) func(c echo.Context) error {
+	return func(c echo.Context) error {
+		_, err := db.GetSession(c)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Session Error %s", err))
+		}
+		var req struct {
+			GameID int64   `json:"game_id" validate:"required"`
+			AIID   []int64 `json:"ai_id" validate:"required"`
+		}
+		if err := c.Bind(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, errors.Wrap(err, "Json Parse"))
+		}
+		if err := c.Validate(&req); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, errors.Wrap(err, "Json Validate"))
+		}
+		if len(req.AIID) != 2 {
+			return echo.NewHTTPError(http.StatusBadRequest, "AI is two")
+		}
+		aiid := []AIID{}
+		for _, ai := range req.AIID {
+			aiid = append(aiid, AIID(ai))
+		}
+		id, err := db.CreatePlayout(GameID(req.GameID), aiid)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, "Create %v", err)
+		}
+		var res struct {
+			ID int64 `json:"playout_id"`
+		}
+		res.ID = id
+		return c.JSON(http.StatusOK, res)
+	}
+}
 
-const TOKEN_LEN = 64
+const TOKEN_LEN = 32
 
 type PlayoutID struct {
 	ID int64
@@ -195,7 +229,7 @@ func (t *PlayoutTask) SpownPlayout(c *Config) error {
 		return errors.Wrapf(err, "Update DB Run playout")
 	}
 	cmd := t.Cmd(c)
-	fmt.Printf("playout cmd = %v", strings.Join(cmd.Args, `, `))
+	fmt.Printf("playout cmd = %v\n", strings.Join(cmd.Args, `   `))
 	err = cmd.Run()
 	if err != nil {
 		return errors.Wrapf(err, "Faild Run %v", cmd.Args)
@@ -248,4 +282,38 @@ func (r *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
 		return errors.Wrapf(err, "Failed update playout to completed")
 	}
 	return nil
+}
+
+func (db *DB) CreatePlayout(gameID GameID, ais []AIID) (int64, error) {
+	// TODO: not rated playout match
+	tx, err := db.DB.Beginx()
+	if err != nil {
+		return -1, errors.Wrapf(err, "Beginx")
+	}
+	token, err := GenerateRandomString(TOKEN_LEN)
+	if err != nil {
+		return -1, errors.Wrapf(err, "Generate Random")
+	}
+	res, err := tx.Exec(`
+		INSERT INTO playout (game_id, state, token)
+		VALUES (?, "ready", ?);
+	`, gameID, token)
+	playoutID, err := res.LastInsertId()
+	if err != nil {
+		return -1, errors.Wrapf(err, "Insert playout")
+	}
+	for turn, ai := range ais {
+		_, err := tx.Exec(`
+			INSERT INTO playout_ai (playout_id, ai_id, turn)
+			VALUES (?, ?, ?)
+		`, playoutID, ai, turn)
+		if err != nil {
+			return -1, errors.Wrapf(err, "Insert %d %d", ai, turn)
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return -1, errors.Wrapf(err, "Commit Playout")
+	}
+	return playoutID, nil
 }

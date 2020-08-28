@@ -1,5 +1,4 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import "./Input.css";
 
 export function Input(props: React.ComponentProps<any>) {
@@ -20,3 +19,24 @@ export function Input(props: React.ComponentProps<any>) {
     </label>
   );
 }
+
+export function useStateValidate(
+  init: string,
+  format: (text: string) => string,
+  validate: (text: string) => string | undefined
+) {
+  const [res, setRes] = useState(init);
+  return {
+    value: res,
+    err: validate(res),
+    change: (e: any) => {
+      setRes(format(e.target.value));
+    },
+  };
+}
+
+export const Format = {
+  trimSpace(s: string) {
+    return s.replace(/\s/, "");
+  },
+};

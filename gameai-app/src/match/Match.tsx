@@ -6,7 +6,7 @@ import "./Match.css";
 
 export function MatchPage() {
   const { id } = useParams();
-  const [match] = API.useAPI(API.matche, [id]);
+  const [match] = API.useAPI(API.match, [id]);
   return Match(match);
 }
 export function Match(match: APIType.Match | null) {
@@ -35,7 +35,7 @@ export function Match(match: APIType.Match | null) {
 export function MatchDesc(match: APIType.Match) {
   return (
     <React.Fragment key={match.id}>
-      <Link to={"/matches/" + match.id}>
+      <Link className="no-line" to={"/matches/" + match.id}>
         <div className="match">
           <p className="head">
             [{match.state}] {match.id}

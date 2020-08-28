@@ -46,7 +46,9 @@ func main() {
 	e.GET("/api/games/:id/matches", server.HandlerViewMatches(db))
 	e.GET("/api/matches/:id", server.HandlerViewMatch(db))
 	e.GET("/api/games/:id/ai-githubs", server.HandlerViewAIGithubByGame(db))
+	e.GET("/api/games/:id/latest-ai", server.HandlerViewLatestByGame(db))
 
+	e.POST("/api/matches", server.HandlerAddMatch(db))
 	e.POST("/api/ai-githubs", server.HandlerAddAIGithub(db))
 
 	db.SetSessionHandler(e)

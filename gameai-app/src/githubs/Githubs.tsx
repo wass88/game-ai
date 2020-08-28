@@ -1,11 +1,10 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import { useParams, Link, useHistory } from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
 import "./Githubs.css";
-import { Button } from "../components/Button";
-import { Input } from "../components/Input";
+import { Button, Input, Popup, useStateValidate, Format } from "../components";
 
 export function GithubsPage() {
   const { id } = useParams();
@@ -13,16 +12,20 @@ export function GithubsPage() {
   return Githubs(githubs);
 }
 export function Githubs(ai_githubs: APIType.AIGithub[] | null) {
+  const [show, setShow] = useState(false);
+  const popup = (
+    <Popup show={show} setShow={setShow}>
+      <FormGithub setShow={setShow}></FormGithub>
+    </Popup>
+  );
   const header = (
     <div>
       <h1>AIs</h1>
-      <Button onClick={() => setShowPopup(true)}>
+      <Button onClick={() => setShow(true)}>
         <p>New AI Config</p>
       </Button>
     </div>
   );
-  const [showPopup, setShowPopup] = useState(false);
-  const popup = PopupGithub(showPopup, setShowPopup);
   if (ai_githubs === null) {
     return (
       <div>
@@ -59,92 +62,53 @@ export function AIGithubDesc(ai_github: APIType.AIGithub) {
   );
 }
 
-export function PopupGithub(
-  show: boolean,
-  set: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  const [github, setGithub] = useState("");
-  const [branch, setBranch] = useState("master");
-  const [post, setPost] = useState(false);
-  const [sending, setSending] = useState(false);
-  const history = useHistory();
-  useEffect(() => {
-    (async () => {
-      if (!post) return;
-      setSending(true);
-      const resp = await API.post_ai_github(1, github, branch);
-      setSending(false);
-      history.push(`/ai/${resp.ai_github_id}`);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [post]);
-
-  function formatBranch(branch: string) {
-    return branch.replace(/\s/, "");
-  }
-  function formatGithub(github: string) {
-    return github.replace(/\s/, "");
-  }
-  function onChangeGithub(e: any) {
-    setGithub(formatGithub(e.target.value));
-  }
-  function onChangeBranch(e: any) {
-    setBranch(formatBranch(e.target.value));
-  }
-  function validateGithub(): string | undefined {
-    if (github.indexOf("/") < 0) {
+function FormGithub(setShow: any) {
+  const github = useStateValidate("", Format.trimSpace, (s) => {
+    if (s.split("/").length === 1) {
       return "Need '/' in user/reponame";
     }
-  }
-  function validateBranch(): string | undefined {
-    if (branch === "") {
+  });
+  const branch = useStateValidate("master", Format.trimSpace, (s) => {
+    if (s === "") {
       return "branch is Empty";
     }
-  }
+  });
+
+  const history = useHistory();
+
+  const [createAI, sending] = API.useCallAPI(
+    API.post_ai_github,
+    [1, github.value, branch.value],
+    (resp) => {
+      history.push(`/ai/${resp.ai_github_id}`);
+    }
+  );
+
   function validate() {
-    return validateGithub() || validateBranch();
-  }
-  function createAI() {
-    setPost(true);
+    return github.err || branch.err;
   }
   function url() {
     return `https://github.com/${github}/tree/${branch}`;
-  }
+  } //validate() !== undefined || sending
   return (
-    <div
-      className="popup"
-      onClick={() => set(false)}
-      style={{ display: show ? "flex" : "none" }}
-    >
-      <div onClick={(e) => e.stopPropagation()}>
-        <h2>New AI Config</h2>
-        <Input
-          value={github}
-          errMsg={validateGithub()}
-          onChange={onChangeGithub}
-        >
-          Github Repository: username/reponame (eg: wass80/reversi-random)
-        </Input>
-        <Input
-          value={branch}
-          errMsg={validateBranch()}
-          onChange={onChangeBranch}
-        >
-          Branch Name: (eg: master)
-        </Input>
-        <p>
-          Github Page:{" "}
-          <a target="_blank" rel="noopener noreferrer" href={url()}>
-            {url()}
-          </a>
-        </p>
-        <Button
-          onClick={createAI}
-          disabled={validate() !== undefined || sending}
-        >
-          Create AI
-        </Button>
-      </div>
-    </div>
+    <>
+      <h2>New AI Config</h2>
+      <Input value={github.value} errMsg={github.err} onChange={github.change}>
+        Github Repository: username/reponame (eg: wass80/reversi-random)
+      </Input>
+      <Input value={branch.value} errMsg={branch.err} onChange={branch.change}>
+        Branch Name: (eg: master)
+      </Input>
+      <p>
+        Github Page:{" "}
+        <a target="_blank" rel="noopener noreferrer" href={url()}>
+          {url()}
+        </a>
+      </p>
+
+      <Button onClick={createAI} disabled={sending}>
+        Create AI
+      </Button>
+    </>
   );
 }
