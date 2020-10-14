@@ -1,6 +1,8 @@
 package server
 
-import "testing"
+import (
+	"testing"
+)
 
 func mockCreateAIGithub(t *testing.T, db *DB) AIGithubID {
 	aig := AIGithubA{
@@ -174,6 +176,7 @@ func TestKickAI(t *testing.T) {
 	_ = createAI(db, t)
 	err := db.KickSetupAI()
 	if err != nil {
+		t.Log(err)
 		t.Fatal(err)
 	}
 }

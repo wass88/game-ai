@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os/exec"
 
@@ -293,10 +294,10 @@ func (ai *AINeedSetup) KickSetup(db *DB) error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed Update State")
 	}
-	// TODO: Check result
 	err = cmd.Run()
 	if err != nil {
-		return errors.Wrapf(err, "Failed cmd Start: %v", cmd)
+		ai.ID.UpdateState(db, "failed")
+		log.Printf("%v", errors.Wrapf(err, "Failed cmd Start: %v", cmd))
 	}
 	return nil
 }

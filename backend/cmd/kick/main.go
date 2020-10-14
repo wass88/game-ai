@@ -20,22 +20,22 @@ func main() {
 	var cmd string
 	if len(cmds) >= 2 {
 		cmd = cmds[1]
-	}
 
-	if cmd == "setupai" {
-		err := db.KickSetupAI()
-		if err != nil {
-			panic(err)
+		if cmd == "setupai" {
+			err := db.KickSetupAI()
+			if err != nil {
+				panic(err)
+			}
+		} else if cmd == "playout" {
+			err := db.KickPlayout()
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			panic(fmt.Sprintf("Unknown command %s", cmd))
 		}
-	} else if cmd == "playout" {
-		err := db.KickPlayout()
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		panic(fmt.Sprintf("Unknown command %s", cmd))
 	}
-	if len(cmd) == 1 {
+	if len(cmds) == 1 {
 		fmt.Printf("Start Kick Tick")
 		kicker := server.NewTaskKicker(db)
 		kicker.Start()

@@ -46,14 +46,12 @@ func (db *DB) SetSessionHandler(e *echo.Echo) {
 // issueSession issues a cookie session after successful Github login
 func (db *DB) issueSession() http.Handler {
 	fn := func(w http.ResponseWriter, req *http.Request) {
-		fmt.Printf("Issue Session\n")
 		ctx := req.Context()
 		githubUser, err := github.UserFromContext(ctx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		fmt.Printf("HEY %v\n", githubUser)
 		if githubUser == nil {
 			http.Error(w, "No githubUser", http.StatusInternalServerError)
 		}
@@ -70,7 +68,6 @@ func (db *DB) issueSession() http.Handler {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-		fmt.Printf("set session %v\n", session)
 		http.Redirect(w, req, "/", http.StatusFound)
 	}
 	return http.HandlerFunc(fn)
