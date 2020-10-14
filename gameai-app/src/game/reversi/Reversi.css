@@ -1,0 +1,42 @@
+.cell {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  background-color: #1a3;
+  border: 1px solid #222;
+  flex: 0 0;
+}
+.cell > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.piece.black,
+.piece.white {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  box-shadow: -1px -2px 1px #aaa inset;
+}
+.black {
+  background-color: #222;
+}
+.white {
+  background-color: #eee;
+}
+.inline-block {
+  display: inline-block;
+}
+
+.highlight {
+  background-color: rgb(7, 132, 0);
+}
+
+.pane {
+  display: flex;
+  flex-direction: row;
+}
+
+.grow0 {
+  flex: 0 0;
+}

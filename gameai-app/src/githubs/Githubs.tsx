@@ -1,6 +1,6 @@
 import React from "react";
 import { useState } from "react";
-import { useParams, Link, useHistory } from "react-router-dom";
+import { useParams, useHistory } from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
 import "./Githubs.css";
@@ -84,9 +84,6 @@ function FormGithub(setShow: any) {
     }
   );
 
-  function validate() {
-    return github.err || branch.err;
-  }
   function url() {
     return `https://github.com/${github}/tree/${branch}`;
   } //validate() !== undefined || sending

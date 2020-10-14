@@ -2,6 +2,7 @@ import React from "react";
 import { useParams, Link } from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
+import { Reversi } from "../game/reversi/Reversi";
 import "./Match.css";
 
 export function MatchPage() {
@@ -15,9 +16,18 @@ export function Match(match: APIType.Match | null) {
       <Link to={"/games/" + match?.game?.id + "/matches"}>
         <h1>Match of {match?.game?.name}</h1>
       </Link>
-      <p>{match?.record ?? "<None>"}</p>
       {(() => {
-        if (match) return MatchDesc(match);
+        if (match)
+          return (
+            <>
+              <Reversi
+                first={match?.results[0].ai?.ai_github.github || "first"}
+                second={match?.results[0].ai?.ai_github.github || "second"}
+                record={match?.record || ""}
+              />
+              {MatchDesc(match)}
+            </>
+          );
         return <p>None</p>;
       })()}
       {match?.results.map((result, i) => (
