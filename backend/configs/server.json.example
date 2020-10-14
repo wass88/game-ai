@@ -1,0 +1,21 @@
+{
+  "db_name": "root:goodpassword@tcp(127.0.0.1:13306)/dev",
+  "ai_runner": {
+    "cmd": "./target/container",
+    "api": "http://localhost:8000/api",
+    "dir": ".data/ai-docker",
+    "cpu": 100,
+    "mem_mb": 256
+  },
+  "playout": {
+    "cmd": "./target/playout",
+    "api": "http://localhost:8000/api"
+  },
+  "session": {
+    "session_secure": "7C31C7CC43D06AF7",
+    "__comment__": "https://github.com/settings/applications/1361543",
+    "github_client_id": "XXXXXXXXXXXXXXXXXXXXXXXX",
+    "github_client_secret": "XXXXXXXXXXXXXXXXXXXXXXXX",
+    "github_redirect_url": "http://localhost:3000/github/callback"
+  }
+}
