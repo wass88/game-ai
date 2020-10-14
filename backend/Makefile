@@ -1,6 +1,8 @@
 GO = go build
 GO_ALPINE = GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
 
+default: build
+
 target/server: cmd/server/main.go  $(wildcard lib/server/*) 
 	$(GO) -o $@ cmd/server/main.go
 
@@ -32,11 +34,11 @@ kick: target/kick
 	CONF_FILE=./configs/server.json \
 	target/kick
 
-kick-setupai:
+kick-setupai: kick
 	CONF_FILE=./configs/server.json \
 	target/kick setupai
 
-kick-playout:
+kick-playout: kick
 	CONF_FILE=./configs/server.json \
 	target/kick playout
 
@@ -44,5 +46,6 @@ test:
 	go test -v ./lib/...
 
 build: target/server target/playout target/kick target/container
+
 
 .PHONY: dev db test build kick
