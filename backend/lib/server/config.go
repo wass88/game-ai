@@ -7,10 +7,12 @@ import (
 )
 
 type Config struct {
-	AIRunner AIRunnerConf `json:"ai_runner"`
-	Playout  PlayoutConf  `json:"playout"`
-	Session  SessionConf  `json:"session"`
-	DBName   string       `json:"db_name"`
+	AIRunner      AIRunnerConf `json:"ai_runner"`
+	Playout       PlayoutConf  `json:"playout"`
+	Session       SessionConf  `json:"session"`
+	DBName        string       `json:"db_name"`
+	APIAddr       string       `json:"api_addr"`
+	InsideAPIAddr string       `json:"inside_addr"`
 }
 
 type AIRunnerConf struct {

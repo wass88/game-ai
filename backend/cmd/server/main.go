@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/pkg/errors"
 	"github.com/wass88/gameai/lib/server"
 )
 
@@ -19,29 +20,40 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 }
 
 func main() {
-	addr := os.Getenv("LISTEN_ADDR")
-	if addr == "" {
-		addr = ":3000"
-	}
 
 	confFile := os.Getenv("CONF_FILE")
+	if confFile == "" {
+		panic(errors.Errorf("Missing CONF_FILE enviroment variable"))
+	}
 	conf, err := server.LoadConfig(confFile)
 	if err != nil {
 		panic(err)
+	}
+	addr := conf.APIAddr
+	if addr == "" {
+		panic(errors.Errorf("Missing api_addr"))
+	}
+	insideAddr := conf.InsideAPIAddr
+	if addr == "" {
+		panic(errors.Errorf("Missing inside_addr"))
 	}
 
 	db := conf.NewDB()
 
 	e := echo.New()
+	eInside := echo.New()
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Validator = &CustomValidator{validator: validator.New()}
 
-	// Change Listen port
-	e.POST("/api/container/ready", server.HandlerReadyContainer(db))
-	e.POST("/api/results/:id/update", server.HandlerResultsUpdate(db))
-	e.POST("/api/results/:id/complete", server.HandlerResultsComplete(db))
+	eInside.Use(middleware.Logger())
+	eInside.Use(middleware.Recover())
+	eInside.Validator = &CustomValidator{validator: validator.New()}
+
+	eInside.POST("/inside_api/container/ready", server.HandlerReadyContainer(db))
+	eInside.POST("/inside_api/results/:id/update", server.HandlerResultsUpdate(db))
+	eInside.POST("/inside_api/results/:id/complete", server.HandlerResultsComplete(db))
 
 	e.GET("/api/games/:id/matches", server.HandlerViewMatches(db))
 	e.GET("/api/matches/:id", server.HandlerViewMatch(db))
@@ -54,8 +66,15 @@ func main() {
 	db.SetSessionHandler(e)
 	e.GET("/api/you", server.HandlerYou(db))
 
-	fmt.Printf("Listening on %s\n", addr)
-	err = e.Start(addr)
+	go func() {
+		fmt.Printf("Listening API on %s\n", addr)
+		err = e.Start(addr)
+		if err != nil {
+			panic(err)
+		}
+	}()
+	fmt.Printf("Listening Inside API on %s\n", insideAddr)
+	err = eInside.Start(insideAddr)
 	if err != nil {
 		panic(err)
 	}

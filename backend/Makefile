@@ -1,7 +1,7 @@
-GO = go build
-GO_ALPINE = GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
+GO_ALPINE=GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
+GO=go build
 
-default: build
+build: target/server target/playout target/kick target/container
 
 target/server: cmd/server/main.go  $(wildcard lib/server/*) 
 	$(GO) -o $@ cmd/server/main.go
@@ -15,8 +15,20 @@ target/container: cmd/container/main.go $(wildcard lib/container/*) $(wildcard l
 target/kick: cmd/kick/main.go $(wildcard lib/server/*)
 	$(GO) -o $@ cmd/kick/main.go
 
-target/server.alpine: cmd/server/main.go $(wildcard lib/server/*)
+bin: bin/server bin/playout bin/container bin/kick
+
+bin/server: cmd/server/main.go  $(wildcard lib/server/*) 
 	$(GO_ALPINE) -o $@ cmd/server/main.go
+
+bin/playout: cmd/playout/main.go $(wildcard lib/playout/*) $(wildcard lib/game/*) $(wildcard lib/game/*/*)
+	$(GO_ALPINE) -o $@ cmd/playout/main.go
+
+bin/container: cmd/container/main.go $(wildcard lib/container/*) $(wildcard lib/docker/*)
+	$(GO_ALPINE) -o $@ cmd/container/main.go
+
+bin/kick: cmd/kick/main.go $(wildcard lib/server/*)
+	$(GO_ALPINE) -o $@ cmd/kick/main.go
+
 
 docker-dev: target/server.alpine
 	docker-compose build --no-cache
@@ -45,7 +57,5 @@ kick-playout: kick
 test:
 	go test -v ./lib/...
 
-build: target/server target/playout target/kick target/container
 
-
-.PHONY: dev db test build kick
+.PHONY: dev db test build kick bin

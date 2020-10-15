@@ -1,0 +1,15 @@
+[Unit]
+Description=Game AI Web Worker
+After=network-online.target
+
+[Service]
+ExecStart=/home/web/game-ai/backend/bin/server
+ExecStop=/bin/kill -INT ${MAINPID}
+Restart=always
+WorkingDirectory=/home/web/game-ai/backend/
+User=web
+Group=web
+Environment="CONF_FILE=/home/web/game-ai/backend/configs/server-prod.json"
+
+[Install]
+WantedBy=multi-user.target
