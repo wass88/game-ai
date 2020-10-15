@@ -42,6 +42,9 @@ dev: target/server
 	LISTEN_ADDR=":8000" \
 	 ./target/server
 
+dev-migrate:
+	migrate -database 'mysql://root:goodpassword@tcp(127.0.0.1:13306)/dev' -path ./migrations -verbose up
+
 kick: target/kick
 	CONF_FILE=./configs/server.json \
 	target/kick
@@ -57,5 +60,4 @@ kick-playout: kick
 test:
 	go test -v ./lib/...
 
-
-.PHONY: dev db test build kick bin
+.PHONY: dev db test build kick bin db-migrate

@@ -84,10 +84,14 @@ func HandlerResultsComplete(db *DB) func(c echo.Context) error {
 }
 func HandlerAddMatch(db *DB) func(c echo.Context) error {
 	return func(c echo.Context) error {
-		_, err := db.GetSession(c)
+		s, err := db.GetSession(c)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Session Error %s", err))
 		}
+		if !s.IsUser() {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Session Error. your not user"))
+		}
+
 		var req struct {
 			GameID int64   `json:"game_id" validate:"required"`
 			AIID   []int64 `json:"ai_id" validate:"required"`

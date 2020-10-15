@@ -2,7 +2,7 @@ import * as APIType from "./api-types";
 
 import { useState, useEffect } from "react";
 
-const Url = "http://localhost:3000";
+const Url = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
 
 async function fetch_with_cookie(
   method: string,

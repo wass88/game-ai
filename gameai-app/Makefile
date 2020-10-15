@@ -1,4 +1,6 @@
-build:
+build: build/index.html
+
+build/index.html: $(wildcard src/*) $(wildcard src/*/*) $(wildcard src/*/*/*)
 	npm run build
 
 mock:

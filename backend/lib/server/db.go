@@ -29,12 +29,21 @@ func (c *Config) NewDB() *DB {
 }
 
 type UserID int64
+type UserAuthority string
+
+const (
+	UserAuthorityVistor UserAuthority = "visitor"
+	UserAuthorityUser   UserAuthority = "user"
+	UserAuthorityAdmin  UserAuthority = "admin"
+)
+
 type UserM struct {
-	ID           int64     `db:"id"`
-	CreatedAt    time.Time `db:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at"`
-	Name         string    `db:"name"`
-	TwitterToken string    `db:"twitter_token"`
+	ID         int64         `db:"id"`
+	CreatedAt  time.Time     `db:"created_at"`
+	UpdatedAt  time.Time     `db:"updated_at"`
+	Name       string        `db:"name"`
+	GithubName string        `db:"github_name"`
+	Authority  UserAuthority `db:"authority"`
 }
 
 type AIGithubUpdating string
@@ -62,6 +71,7 @@ const (
 	AIFound  AIState = "found"
 	AISetup  AIState = "setup"
 	AIReady  AIState = "ready"
+	AIFailed AIState = "failed"
 	AIPurged AIState = "purged"
 )
 
@@ -89,6 +99,7 @@ var (
 	PlayoutReady     PlayoutState = "ready"
 	PlayoutRunning   PlayoutState = "running"
 	PlayoutCompleted PlayoutState = "completed"
+	PlayoutFailed    PlayoutState = "failed"
 )
 
 type PlayoutM struct {
