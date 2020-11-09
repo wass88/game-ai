@@ -1,8 +1,9 @@
-import React from "react";
-import API from "../api";
+import React, {useContext} from "react";
+import { Link } from "react-router-dom";
+import {LoginUserContext} from "../App";
 
 export default function Home() {
-  const [you] = API.useAPI(API.you, []);
+  const you = useContext(LoginUserContext)
   return (
     <>
       <p>ゲームAI対戦サイト</p>
@@ -15,6 +16,11 @@ export default function Home() {
                 Welcome {you.name} <a href="/github/logout"> Logout </a>
               </p>
               <p>Your account is {you.authority}.</p>
+
+              Reversi: {" "}
+              <Link to="/games/1/matches">Matches</Link> {" "}
+
+              <Link to="/games/1/githubs">AIs</Link>
             </>
           );
         }

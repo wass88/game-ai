@@ -6,3 +6,14 @@
 #inner {
   margin: 0 32px;
 }
+
+header {
+  width:100%;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.userinfo {
+}

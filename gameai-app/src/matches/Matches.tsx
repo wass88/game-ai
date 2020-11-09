@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
 import "./Matches.css";
@@ -7,9 +7,9 @@ import { MatchDesc } from "../match/Match";
 import { Button, Popup, Select } from "../components";
 
 export function MatchesPage() {
-  const { id } = useParams();
-  const [matches] = API.useAPI(API.matches, [id]);
-  return Matches(id, matches);
+  const { gameID } = useParams();
+  const [matches] = API.useAPI(API.matches, [gameID]);
+  return Matches(gameID, matches);
 }
 export function Matches(game_id: number, matches: APIType.Match[] | null) {
   const [show, setShow] = useState(false);
@@ -19,7 +19,10 @@ export function Matches(game_id: number, matches: APIType.Match[] | null) {
       <FormMatch game_id={game_id} setShow={setShow} setCreated={setCreated} />
     </Popup>
   );
-  let head = <h1>Match Results</h1>;
+  let head = <>
+    <h1>Match Results</h1>
+    <Link to={`/games/${game_id}/githubs`}>List of AIs</Link>
+  </>
   if (!matches) {
     return (
       <>

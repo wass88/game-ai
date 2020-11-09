@@ -1,17 +1,17 @@
 import React from "react";
 import { useState } from "react";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory, Link} from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
 import "./Githubs.css";
 import { Button, Input, Popup, useStateValidate, Format } from "../components";
 
 export function GithubsPage() {
-  const { id } = useParams();
-  const [githubs] = API.useAPI(API.ai_githubs, [id]);
-  return Githubs(githubs);
+  const { gameID } = useParams();
+  const [githubs] = API.useAPI(API.ai_githubs, [gameID]);
+  return Githubs(gameID, githubs);
 }
-export function Githubs(ai_githubs: APIType.AIGithub[] | null) {
+export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
   const [show, setShow] = useState(false);
   const popup = (
     <Popup show={show} setShow={setShow}>
@@ -21,6 +21,7 @@ export function Githubs(ai_githubs: APIType.AIGithub[] | null) {
   const header = (
     <div>
       <h1>AIs</h1>
+      <Link to={`/games/${gameID}/matches`}>List of Matches</Link>
       <Button onClick={() => setShow(true)}>
         <p>New AI Config</p>
       </Button>
