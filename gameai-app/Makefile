@@ -9,4 +9,7 @@ mock:
 src/api-types.ts: ../backend/api/swagger.yml
 	npx sw2dts $< > $@
 
+dev:
+	npm run start
+
 .PHONY: mock build

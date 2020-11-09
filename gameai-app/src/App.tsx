@@ -18,6 +18,10 @@ export default function App() {
             <Link to="/games/1/matches">Matches</Link>
 
             <Link to="/games/1/githubs">AIs</Link>
+
+            {/* TODO User info */}
+            {/* TODO  Game List */}
+            {/* TODO  Links of Current Game */}
           </header>
           <main>
             <Switch>
