@@ -145,6 +145,7 @@ func (db *DB) GetUserByGithub(github string) (*UserM, bool, error) {
 	}
 	return res[0], true, nil
 }
+
 func (db *DB) NewUserIfNotExist(githubName string) (*UserM, error) {
 	user, ok, err := db.GetUserByGithub(githubName)
 	if err != nil {
@@ -159,9 +160,9 @@ func (db *DB) NewUserIfNotExist(githubName string) (*UserM, error) {
 	}
 	user, ok, err = db.GetUserByGithub(githubName)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Get User")
+		return nil, errors.Wrapf(err, "Get User After github")
 	}
-	if ok {
+	if !ok {
 		return nil, errors.Wrapf(err, "Missing user after new")
 	}
 	return user, nil

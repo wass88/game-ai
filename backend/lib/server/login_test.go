@@ -5,6 +5,7 @@ import "testing"
 func TestNewUser(t *testing.T) {
 	db := getDB()
 	dropMock(db)
+	db.DB.MustExec(`DELETE FROM user WHERE name = ?`, "wass")
 	id, err := db.NewUser("wass")
 	if err != nil {
 		t.Fatal(err)
@@ -15,6 +16,7 @@ func TestNewUser(t *testing.T) {
 func TestNewUserIfN(t *testing.T) {
 	db := getDB()
 	dropMock(db)
+	db.DB.MustExec(`DELETE FROM user WHERE name = ?`, "wass")
 	id1, err := db.NewUserIfNotExist("wass")
 	if err != nil {
 		t.Fatal(err)
@@ -23,8 +25,8 @@ func TestNewUserIfN(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if id1 != id2 {
-		t.Fatalf("id1:%d != id2:%d", id1, id2)
+	if id1 == nil || id2 == nil || id1.ID != id2.ID {
+		t.Fatalf("id1:%v != id2:%v", id1, id2)
 	}
-	db.DB.MustExec(`DELETE FROM user WHERE id = ?`, id1)
+	db.DB.MustExec(`DELETE FROM user WHERE id = ?`, id1.ID)
 }

@@ -1,7 +1,7 @@
 package server
 
 func getDB() *DB {
-	dbname := `root:goodpassword@tcp(127.0.0.1:13306)/dev`
+	dbname := `root:goodpassword@tcp(127.0.0.1:13306)/dev?parseTime=true`
 	conf := Config{DBName: dbname}
 	return conf.NewDB()
 }
