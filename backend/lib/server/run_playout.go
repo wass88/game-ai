@@ -12,9 +12,10 @@ import (
 	"github.com/wass88/gameai/lib/protocol"
 )
 
+// KickPlayout kicks the oldest unplayed playout
 func (db *DB) KickPlayout() error {
 	fmt.Printf("[Playout] Start\n")
-	t, err := db.GetOldestTask()
+	t, err := db.GetOldestPlayoutTask()
 	if err != nil {
 		return errors.Wrapf(err, "Kick Playout")
 	}
@@ -24,12 +25,17 @@ func (db *DB) KickPlayout() error {
 	}
 	err = t.SpownPlayout(db.Config)
 	if err != nil {
-		return errors.Wrapf(err, "Failed Playout %v", err)
+		err2 := t.PlayoutID.MakeFailed()
+		if err != nil {
+			return errors.Wrapf(err, "Make failed playout with %v", err2)
+		}
+		return errors.Wrapf(err, "Spown Playout")
 	}
 	fmt.Printf("[Playout] Complated")
 	return nil
 }
 
+//GetPlayoutIDAndCheckToken returns Playout by ID with check TOKEN
 func GetPlayoutIDAndCheckToken(c echo.Context, db *DB) (*PlayoutID, error) {
 	idn := c.Param("id")
 	id, err := strconv.Atoi(idn)
@@ -48,6 +54,8 @@ func GetPlayoutIDAndCheckToken(c echo.Context, db *DB) (*PlayoutID, error) {
 	return &playoutID, nil
 
 }
+
+//HandlerResultsUpdate handles the playout updating
 func HandlerResultsUpdate(db *DB) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		id, err := GetPlayoutIDAndCheckToken(c, db)
@@ -65,6 +73,8 @@ func HandlerResultsUpdate(db *DB) func(c echo.Context) error {
 		return c.String(http.StatusOK, "")
 	}
 }
+
+//HandlerResultComplete makes the playout completed
 func HandlerResultsComplete(db *DB) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		id, err := GetPlayoutIDAndCheckToken(c, db)
@@ -82,6 +92,8 @@ func HandlerResultsComplete(db *DB) func(c echo.Context) error {
 		return c.String(http.StatusOK, "")
 	}
 }
+
+//HandlerAddMatch appends the new playout
 func HandlerAddMatch(db *DB) func(c echo.Context) error {
 	return func(c echo.Context) error {
 		s, err := db.GetSession(c)
@@ -121,15 +133,18 @@ func HandlerAddMatch(db *DB) func(c echo.Context) error {
 	}
 }
 
-const TOKEN_LEN = 32
+//TokenLen is length of tokens to update playout
+const TokenLen = 32
 
+//PlayoutID has DB Config
 type PlayoutID struct {
 	ID int64
 	DB *DB
 }
 
+//NewPlayout creates new playout
 func (db *DB) NewPlayout(gameID int64, aiIDs []int64) (*PlayoutID, error) {
-	token, err := GenerateRandomString(TOKEN_LEN)
+	token, err := GenerateRandomString(TokenLen)
 	if err != nil {
 		return nil, err
 	}
@@ -154,12 +169,15 @@ func (db *DB) NewPlayout(gameID int64, aiIDs []int64) (*PlayoutID, error) {
 	return &PlayoutID{playoutID, db}, nil
 }
 
+//PlayerCmd is AI config
 type PlayerCmd struct {
 	ID     AIID
 	Github string
 	Branch string
 	Commit string
 }
+
+//PlayoutTask is Playout Config
 type PlayoutTask struct {
 	PlayoutID PlayoutID
 	Token     string
@@ -167,7 +185,8 @@ type PlayoutTask struct {
 	Players   []PlayerCmd
 }
 
-func (db *DB) GetOldestTask() (*PlayoutTask, error) {
+//GetOldestPlayoutTask fetchs oldest playout
+func (db *DB) GetOldestPlayoutTask() (*PlayoutTask, error) {
 	ais := []struct {
 		PlayoutID int64  `db:"playout_id"`
 		Token     string `db:"token"`
@@ -216,6 +235,7 @@ func (db *DB) GetOldestTask() (*PlayoutTask, error) {
 	return &res, nil
 }
 
+//Run runs the playout
 func (p *PlayoutID) Run() error {
 	_, err := p.DB.DB.Exec(`
 		UPDATE playout SET state = "running"
@@ -227,6 +247,7 @@ func (p *PlayoutID) Run() error {
 	return nil
 }
 
+//SpownPlayout spowns the playout
 func (t *PlayoutTask) SpownPlayout(c *Config) error {
 	err := t.PlayoutID.Run()
 	if err != nil {
@@ -241,13 +262,14 @@ func (t *PlayoutTask) SpownPlayout(c *Config) error {
 	return nil
 }
 
-func (r *PlayoutID) ValidateToken(token string) (bool, error) {
+//ValidateToken validates the token of playout updating
+func (p *PlayoutID) ValidateToken(token string) (bool, error) {
 	tok := []sql.NullString{}
-	err := r.DB.DB.Select(&tok, `
+	err := p.DB.DB.Select(&tok, `
 		SELECT playout.token AS token
 		FROM playout
 		WHERE playout.id = ?
-	`, r.ID)
+	`, p.ID)
 	if err != nil {
 		return false, errors.Wrapf(err, "Failed Select")
 	}
@@ -257,44 +279,59 @@ func (r *PlayoutID) ValidateToken(token string) (bool, error) {
 	return tok[0].String == token, nil
 }
 
-func (r *PlayoutID) Update(result protocol.ResultA) error {
-	_, err := r.DB.DB.Exec(`
+//Update append the result to the playout.
+func (p *PlayoutID) Update(result protocol.ResultA) error {
+	_, err := p.DB.DB.Exec(`
 		INSERT INTO playout_result (playout_id, record, exception)
 		VALUES (?, ?, ?)
 		ON DUPLICATE KEY UPDATE record=?, exception=?
-	`, r.ID, result.Record, result.Exception, result.Record, result.Exception)
+	`, p.ID, result.Record, result.Exception, result.Record, result.Exception)
 	if err != nil {
 		return errors.Wrapf(err, "Failed insert playout_result")
 	}
 	return nil
 }
 
-func (r *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
+//MakeFailed makes the playout failed
+func (r *PlayoutID) MakeFailed() error {
+	_, err := r.DB.DB.Exec(`
+		UPDATE playout SET state = "failed"
+		WHERE id = ?
+	`, r.ID)
+	if err != nil {
+		return errors.Wrapf(err, "Failed insert playout_result")
+	}
+	return nil
+}
+
+//Complete appends final result to the playout  and makes the playout finished
+func (p *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
 	for i, result := range results {
-		_, err := r.DB.DB.Exec(`
+		_, err := p.DB.DB.Exec(`
 			INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)
 			VALUES (?, ?, ?, ?, ?)
-		`, i, r.ID, result.Result, result.Stderr, result.Exception)
+		`, i, p.ID, result.Result, result.Stderr, result.Exception)
 		if err != nil {
 			return errors.Wrapf(err, "Failed insert playout_result_ai")
 		}
 	}
-	_, err := r.DB.DB.Exec(`
+	_, err := p.DB.DB.Exec(`
 		UPDATE playout SET state="completed" WHERE playout.id=?
-	`, r.ID)
+	`, p.ID)
 	if err != nil {
 		return errors.Wrapf(err, "Failed update playout to completed")
 	}
 	return nil
 }
 
+//CreatePlayout creates new playout
 func (db *DB) CreatePlayout(gameID GameID, ais []AIID) (int64, error) {
 	// TODO: not rated playout match
 	tx, err := db.DB.Beginx()
 	if err != nil {
 		return -1, errors.Wrapf(err, "Beginx")
 	}
-	token, err := GenerateRandomString(TOKEN_LEN)
+	token, err := GenerateRandomString(TokenLen)
 	if err != nil {
 		return -1, errors.Wrapf(err, "Generate Random")
 	}

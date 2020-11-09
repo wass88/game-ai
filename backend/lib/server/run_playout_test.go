@@ -39,7 +39,7 @@ func TestCompletePlayout(t *testing.T) {
 
 func TestGetOldestPlayout(t *testing.T) {
 	db := mockPlayoutDB()
-	task, err := db.GetOldestTask()
+	task, err := db.GetOldestPlayoutTask()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func TestGetOldestPlayout(t *testing.T) {
 
 func TestRunPlayout(t *testing.T) {
 	db := mockPlayoutDB()
-	task, err := db.GetOldestTask()
+	task, err := db.GetOldestPlayoutTask()
 	if err != nil {
 		t.Fatal(err)
 	}
