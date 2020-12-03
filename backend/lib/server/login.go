@@ -162,7 +162,7 @@ func (db *DB) NewUserIfNotExist(githubName string) (*UserM, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get User After github")
 	}
-	if ok {
+	if !ok {
 		return nil, errors.Wrapf(err, "Missing user after new")
 	}
 	return user, nil

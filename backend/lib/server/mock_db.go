@@ -43,6 +43,11 @@ func dropMock(db *DB) {
 			(SELECT id FROM playout WHERE game_id = 1)
 		`)
 	db.DB.MustExec(`DELETE FROM playout WHERE game_id = 1`)
+	db.DB.MustExec(`DELETE FROM rate_ai
+		WHERE ai_id
+		IN (SELECT ai.id FROM ai JOIN ai_github
+			ON ai_github.id = ai.ai_github_id
+			WHERE ai_github.game_id = 1)`)
 	db.DB.MustExec(`DELETE FROM ai
 		WHERE ai_github_id
 		IN (SELECT id FROM ai_github WHERE game_id = 1)`)
