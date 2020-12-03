@@ -11,6 +11,7 @@ export interface AI {
     commit: string;
     state?: string;
     ai_github: AIGithub;
+    rate?: number;
 }
 export interface AIGithub {
     /**

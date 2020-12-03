@@ -43,13 +43,16 @@ func IndexSort(values []int) []int {
 }
 
 func (e EroRating) Rating(old []float64, score []int) []float64 {
+	if e.K <= 0 {
+		panic("ero.K  must be > 0")
+	}
 	res := make([]float64, len(old))
 	copy(res, old)
 
 	sorted := IndexSort(score)
-	for ri := 0; ri <len(old); ri++ {
+	for ri := 0; ri < len(old); ri++ {
 		i := sorted[ri]
-		for rj :=ri+1; rj<len(old); rj++ {
+		for rj := ri+1; rj < len(old); rj++ {
 			j := sorted[rj]
 			if score[i] == score[j] {
 				continue
@@ -60,7 +63,7 @@ func (e EroRating) Rating(old []float64, score []int) []float64 {
 				win = j
 				lose = i
 			}
-			winRate := 1 / (math.Pow(10, old[win] - old[lose])+ 1)
+			winRate := 1 / (math.Pow(10, old[win] - old[lose]) + 1)
 			newWin := res[win] + e.K * (1 - winRate)
 			newLose := res[lose] + e.K * (-winRate)
 			res[win] = newWin

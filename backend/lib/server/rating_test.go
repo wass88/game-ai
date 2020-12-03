@@ -7,12 +7,12 @@ import (
 
 
 func TestEroRating(t *testing.T) {
-	r := EroRating{}.Rating([]float64{1500,1500},[]int{1, 0})
+	r := EroRating{K:32}.Rating([]float64{1500,1500},[]int{1, 0})
 	t.Logf("Rate %v", r)
 	if r[0] <= r[1] {
 		t.Fatalf("R0 must be bigger than R1, %f <= %f", r[0], r[1])
 	}
-	r = EroRating{}.Rating([]float64{1500,1500,1500,1500},[]int{1, 2, 1, 0})
+	r = EroRating{K:32}.Rating([]float64{1500,1500,1500,1500},[]int{1, 2, 1, 0})
 	t.Logf("Rate %v", r)
 	if !(r[1] > r[0] && r[1] > r[2] && r[0] > r[3] && r[2] > r[3]) {
 		t.Fatalf("Expeted [1] > [0] & [1] > [2] & [0] > [3] & [2] > [3]. %v", r)

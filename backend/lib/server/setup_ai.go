@@ -196,12 +196,12 @@ func FetchCommitFromGithub(userRepo, branch string) (string, error) {
 		return "", errors.Wrapf(err, "Failed Get %s", u)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", errors.Errorf("Bad Status %d", resp.StatusCode)
-	}
 	bytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", errors.Wrapf(err, "Fail ReadAll")
+	}
+	if resp.StatusCode != 200 {
+		return "", errors.Errorf("Bad Status %d\nBody: %s", resp.StatusCode, bytes)
 	}
 	var res struct {
 		Commit struct {

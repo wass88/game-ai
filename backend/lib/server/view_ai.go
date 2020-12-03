@@ -13,6 +13,7 @@ type AIRG struct {
 	AIGIthubID AIGithubID `json:"ai_github_id"`
 	Commit     string     `json:"commit"`
 	State      AIState    `json:"state"`
+	Rate       *float64 `json:"rate"`
 }
 
 type AIGithubRAI struct {
@@ -68,6 +69,7 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 		AIID     *AIID            `db:"ai_id"`
 		AIStatus *AIState         `db:"ai_status"`
 		AICommit *string          `db:"ai_commit"`
+		AIRate   *float64         `db:"ai_rate"`
 	}
 	var sel []Result
 	err := db.DB.Select(&sel, `
@@ -75,13 +77,14 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 			gm.name AS game_name, u.name AS user_name,
 			g.updating AS updating,
 			g.github AS github, g.branch AS branch,
-			ai.id AS ai_id, ai.state AS ai_status, ai.commit AS ai_commit
+			ai.id AS ai_id, ai.state AS ai_status, ai.commit AS ai_commit, rate_ai.rate AS ai_rate
 		FROM ai_github AS g
 		INNER JOIN game AS gm ON gm.id = g.game_id
 		INNER JOIN user AS u ON u.id = g.user_id
 		INNER JOIN LATERAL (SELECT * FROM ai
 			WHERE ai.ai_github_id = g.id
 			ORDER BY ai.created_at DESC LIMIT 1) AS ai ON ai.ai_github_id = g.id
+		LEFT JOIN rate_ai ON rate_ai.ai_id = ai.id
 		WHERE g.game_id = ?
 	`, id)
 	if err != nil {
@@ -109,6 +112,7 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 				AIGIthubID: s.ID,
 				State:      *s.AIStatus,
 				Commit:     *s.AICommit,
+				Rate:       s.AIRate,
 			}
 		}
 		res = append(res, aig)
@@ -121,15 +125,17 @@ type AIShortInfo struct {
 	Github string `db:"github" json:"github"`
 	Branch string `db:"branch" json:"branch"`
 	Commit string `db:"commit" json:"commti"`
+	Rate *float64 `db:"rate" join:"rate"`
 }
 
 func (db *DB) GetLatestAIByGame(id GameID) ([]AIShortInfo, error) {
 	var res []AIShortInfo
 	err := db.DB.Select(&res, `
-		SELECT ai.id AS id, ai.commit AS commit, g.github AS github, g.branch AS branch
+		SELECT ai.id AS id, ai.commit AS commit, g.github AS github, g.branch AS branch, rate_ai.rate
 		FROM ai
 		LEFT JOIN ai AS b ON (ai.created_at < b.created_at AND ai.ai_github_id = b.ai_github_id)
 		INNER JOIN ai_github AS g ON g.id = ai.ai_github_id
+		LEFT JOIN rate_ai ON rate_ai.ai_id = ai.id
 		WHERE ai.state = "ready"
 		AND g.game_id = ?
 		AND b.created_at IS NULL

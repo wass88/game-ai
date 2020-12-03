@@ -40,7 +40,7 @@ func (db *taskRating) Kick() error {
 
 func NewTaskKicker(db *DB) *TaskKicker {
 	tasks := []*TaskKick{
-		NewTaskKick((*taskSetupAI)(db), time.Second*60),
+		NewTaskKick((*taskSetupAI)(db), time.Second*600), // Github Rate...
 		NewTaskKick((*taskPlayout)(db), time.Second*60),
 		NewTaskKick((*taskRating)(db), time.Second*60),
 	}
