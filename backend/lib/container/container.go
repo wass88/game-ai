@@ -54,18 +54,22 @@ type HttpClient interface {
 }
 
 func (d *Cont) Setup(c Commit) error {
+	fmt.Printf("Start Downlaod\n")
 	err := c.Download(d.SaveDir)
 	if err != nil {
 		return errors.Wrap(err, "On Download")
 	}
+	fmt.Printf("Start Build\n")
 	err = c.Build(d)
 	if err != nil {
 		return errors.Wrapf(err, "On Build")
 	}
+	fmt.Printf("Start SendReady\n")
 	err = c.SendReady(d)
 	if err != nil {
 		return errors.Wrapf(err, "On Send")
 	}
+	fmt.Printf("Setup Completed\n")
 	return nil
 }
 

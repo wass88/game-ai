@@ -7,6 +7,7 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 	"github.com/wass88/gameai/lib/server"
 )
@@ -45,11 +46,13 @@ func main() {
 
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Logger.SetLevel(log.DEBUG)
 	e.Validator = &CustomValidator{validator: validator.New()}
 
 	eInside.Use(middleware.Logger())
 	eInside.Use(middleware.Recover())
 	eInside.Validator = &CustomValidator{validator: validator.New()}
+	eInside.Logger.SetLevel(log.DEBUG)
 
 	eInside.POST("/inside_api/container/ready", server.HandlerReadyContainer(db))
 	eInside.POST("/inside_api/results/:id/update", server.HandlerResultsUpdate(db))

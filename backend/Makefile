@@ -49,11 +49,11 @@ kick: target/kick
 	CONF_FILE=./configs/server.json \
 	target/kick
 
-kick-setupai: kick
+kick-setupai: target/kick
 	CONF_FILE=./configs/server.json \
 	target/kick setupai
 
-kick-playout: kick
+kick-playout: target/kick
 	CONF_FILE=./configs/server.json \
 	target/kick playout
 

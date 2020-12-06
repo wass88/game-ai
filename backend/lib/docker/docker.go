@@ -32,7 +32,7 @@ func NewDocker() (*Docker, error) {
 func (d *Docker) Build(c context.Context, dir string, image string) error {
 	tar, err := makeTar(dir)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "make Tar")
 	}
 	option := types.ImageBuildOptions{
 		Tags: []string{image},
@@ -41,7 +41,7 @@ func (d *Docker) Build(c context.Context, dir string, image string) error {
 	}
 	_, err = d.Client.ImageBuild(c, tar, option)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Image Build")
 	}
 	return nil
 }
@@ -115,7 +115,7 @@ func makeTar(path string) (io.Reader, error) {
 
 	// TODO .dockerignore (now skip .git)
 
-	fmt.Printf("make %s\n", path)
+	fmt.Printf("Make Tar %s\n", path)
 	err := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
 		// Skip symlink
 		if fi.Mode()&os.ModeSymlink != 0 {

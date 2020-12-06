@@ -53,6 +53,7 @@ func HandlerReadyContainer(db *DB) func(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid json %v", err))
 		}
+		c.Logger().Debugf("%v", req)
 		err = c.Validate(&req)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("failed validation json %v", err))
@@ -201,7 +202,7 @@ func FetchCommitFromGithub(userRepo, branch string) (string, error) {
 		return "", errors.Wrapf(err, "Fail ReadAll")
 	}
 	if resp.StatusCode != 200 {
-		return "", errors.Errorf("Bad Status %d\nBody: %s", resp.StatusCode, bytes)
+		return "", errors.Errorf("Bad Status %d from %s\nBody: %s", resp.StatusCode, u, bytes)
 	}
 	var res struct {
 		Commit struct {
@@ -300,7 +301,12 @@ func (ai *AINeedSetup) KickSetup(db *DB) error {
 	err = cmd.Run()
 	if err != nil {
 		ai.ID.UpdateState(db, "failed")
-		log.Printf("%v", errors.Wrapf(err, "Failed cmd Start: %v", cmd))
+		log.Printf("%v\n", errors.Wrapf(err, "Failed cmd Start: %v", cmd))
 	}
+	bytes, err := cmd.CombinedOutput()
+	if err != nil {
+		return errors.Wrapf(err, "Combined Output")
+	}
+	log.Printf("Output: %v\n", bytes)
 	return nil
 }
