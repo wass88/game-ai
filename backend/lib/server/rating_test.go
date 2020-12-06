@@ -2,7 +2,6 @@ package server
 
 import (
 	"testing"
-	"time"
 )
 
 
@@ -19,68 +18,38 @@ func TestEroRating(t *testing.T) {
 	}
 }
 
-func TestFetchPlayoutsForRating(t *testing.T) {
+func TestFetchRated(t *testing.T) {
 	db := mockPlayoutResultDB()
-	res, err := db.FetchPlayoutsForRating()
+	playout := PlayoutID{1, db}
+	rated, err := playout.FetchRated()
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%+v", res)
-	ais := res.AIsForUpdate()
-	t.Logf("%v", ais)
+	if rated {
+		t.Fatalf("ID: 1 is not rated")
+	}
+	t.Logf("%v", rated)
 }
 
-func TestFetchRatingAIs(t *testing.T) {
-	db :=mockPlayoutResultDB()
-	rating, err := db.FetchRateAIs([]int64{1, 2})
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%v", rating)
-}
-
-func TestCalclateRating(t *testing.T) {
-	playouts := PlayoutResultsForRating {
-		{1, time.Time{}, []int64{1, 2}, []int{-1, 1}},
-	}
-	rating := RateAI{1: 1500, 2: 1500}
-	r, err := playouts.CalculateRating(rating)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if r[1] >= r[2] {
-		t.Fatal("R[1] should be worse than R[2]", r[1], r[2])
-	}
-	t.Logf("%v", r)
-}
-
-func TestUpdateRateAIs(t *testing.T) {
-	r1 := 1200.0
-	r2 := 1600.0
-	rates := RateAI{1: r1, 2:r2}
+func TestFetchLatestRate(t *testing.T) {
 	db := mockPlayoutResultDB()
-	err := db.UpdateRateAIs(rates)
+	playout := PlayoutID{1, db}
+	rate, selfMatch, err := playout.FetchLatestRate()
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := db.FetchRateAIs([]int64{1, 2})
-	if err != nil {
-		t.Fatal(err)
+	t.Logf("%v %v", rate, selfMatch)
+	if selfMatch {
+		t.Fatalf("selfMatch should be false")
 	}
-	t.Logf("%v", res)
-	eps := 0.01
-	if res[1] - r1 > eps {
-		t.Fatalf("res[0]:%f shuold be %f", res[1], r1)
-	}
-	if res[2] - r2 > eps {
-		t.Fatalf("res[0]:%f shuold be %f", res[2], r2)
-	}
-}
 
-func TestUpdateRating(t *testing.T) {
-	db := mockPlayoutResultDB()
-	err := db.UpdateRating()
+	playout = PlayoutID{2, db}
+	rate, selfMatch, err = playout.FetchLatestRate()
 	if err != nil {
 		t.Fatal(err)
+	}
+	t.Logf("%v %v", rate, selfMatch)
+	if !selfMatch {
+		t.Fatalf("selfMatch should be true")
 	}
 }

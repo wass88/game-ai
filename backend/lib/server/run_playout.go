@@ -306,22 +306,49 @@ func (r *PlayoutID) MakeFailed() error {
 
 //Complete appends final result to the playout  and makes the playout finished
 func (p *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
+	//TODO: Using transactions
+	rate, err := p.CalclateRate(results)
+	if err != nil {
+		return errors.Wrapf(err, "Calclate Rate")
+	}
 	for i, result := range results {
 		_, err := p.DB.DB.Exec(`
-			INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)
+			INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception, rate)
 			VALUES (?, ?, ?, ?, ?)
-		`, i, p.ID, result.Result, result.Stderr, result.Exception)
+		`, i, p.ID, result.Result, result.Stderr, result.Exception, rate[i])
 		if err != nil {
 			return errors.Wrapf(err, "Failed insert playout_result_ai")
 		}
 	}
-	_, err := p.DB.DB.Exec(`
+	_, err = p.DB.DB.Exec(`
 		UPDATE playout SET state="completed" WHERE playout.id=?
 	`, p.ID)
 	if err != nil {
 		return errors.Wrapf(err, "Failed update playout to completed")
 	}
 	return nil
+}
+
+func (p *PlayoutID) CalclateRate(results []protocol.ResultPlayerA) ([]float64, error) {
+	rated, err := p.FetchRated()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Fetch Rated")
+	}
+	rate, selfMatch, err := p.FetchLatestRate()
+	if err != nil {
+		return nil, errors.Wrapf(err, "")
+	}
+	if selfMatch {
+		rated = false
+	}
+	if !rated {
+		return rate, nil
+	}
+	score := []int{}
+	for _, result := range results {
+		score = append(score, result.Result)
+	}
+	return eroRating.Rating(rate, score), nil
 }
 
 //CreatePlayout creates new playout

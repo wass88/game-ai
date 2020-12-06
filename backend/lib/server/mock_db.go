@@ -43,11 +43,6 @@ func dropMock(db *DB) {
 			(SELECT id FROM playout WHERE game_id = 1)
 		`)
 	db.DB.MustExec(`DELETE FROM playout WHERE game_id = 1`)
-	db.DB.MustExec(`DELETE FROM rate_ai
-		WHERE ai_id
-		IN (SELECT ai.id FROM ai JOIN ai_github
-			ON ai_github.id = ai.ai_github_id
-			WHERE ai_github.game_id = 1)`)
 	db.DB.MustExec(`DELETE FROM ai
 		WHERE ai_github_id
 		IN (SELECT id FROM ai_github WHERE game_id = 1)`)
@@ -128,11 +123,11 @@ func setupPlayoutResult(db *DB) {
 		VALUES (1, "rec", "exp")
 	`)
 	db.DB.MustExec(`
-		INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)
-		VALUES (0, 1, 1, "stdout1", "exp1")
+		INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception, rate)
+		VALUES (0, 1, 1, "stdout1", "exp1", 1600)
 	`)
 	db.DB.MustExec(`
-		INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception)
-		VALUES (1, 1, -1, "stdout1", "exp1")
+		INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception, rate)
+		VALUES (1, 1, -1, "stdout1", "exp1", 1400)
 	`)
 }

@@ -73,19 +73,33 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 	}
 	var sel []Result
 	err := db.DB.Select(&sel, `
-		SELECT g.id AS id, g.game_id AS game_id, g.user_id AS user_id,
-			gm.name AS game_name, u.name AS user_name,
-			g.updating AS updating,
-			g.github AS github, g.branch AS branch,
-			ai.id AS ai_id, ai.state AS ai_status, ai.commit AS ai_commit, rate_ai.rate AS ai_rate
-		FROM ai_github AS g
-		INNER JOIN game AS gm ON gm.id = g.game_id
-		INNER JOIN user AS u ON u.id = g.user_id
-		INNER JOIN LATERAL (SELECT * FROM ai
-			WHERE ai.ai_github_id = g.id
-			ORDER BY ai.created_at DESC LIMIT 1) AS ai ON ai.ai_github_id = g.id
-		LEFT JOIN rate_ai ON rate_ai.ai_id = ai.id
-		WHERE g.game_id = ?
+	SELECT g.id AS id, g.game_id AS game_id, g.user_id AS user_id,
+	gm.name AS game_name, u.name AS user_name,
+	g.updating AS updating,
+	g.github AS github, g.branch AS branch,
+	ai.id AS ai_id, ai.state AS ai_status, ai.commit AS ai_commit, rate.rate AS ai_rate
+FROM ai_github AS g
+INNER JOIN game AS gm ON gm.id = g.game_id
+INNER JOIN user AS u ON u.id = g.user_id
+INNER JOIN LATERAL (SELECT * FROM ai
+	WHERE ai.ai_github_id = g.id
+	ORDER BY ai.created_at DESC LIMIT 1) AS ai ON ai.ai_github_id = g.id
+LEFT JOIN (
+SELECT o_playout_ai.ai_id, o_result_ai.rate, o_playout.game_id
+FROM playout AS o_playout
+INNER JOIN playout_ai AS o_playout_ai ON o_playout_ai.playout_id = o_playout.id
+INNER JOIN playout_result_ai AS o_result_ai ON o_result_ai.turn = o_playout_ai.turn AND o_result_ai.playout_id = o_playout_ai.playout_id
+WHERE NOT EXISTS(
+ SELECT 1 FROM playout_ai AS t_playout_ai
+   INNER JOIN playout_result_ai AS t_result_ai ON t_result_ai.turn = t_playout_ai.turn AND t_result_ai.playout_id = t_playout_ai.playout_id
+   INNER JOIN playout AS t_playout ON t_playout.id = t_playout_ai.playout_id
+   WHERE o_playout.game_id = t_playout.game_id
+	 AND o_playout_ai.ai_id = t_playout_ai.ai_id
+	 AND o_result_ai.created_at <= t_result_ai.created_at
+	 AND o_result_ai.id < t_result_ai.id
+ )
+) AS rate ON rate.game_id = g.game_id AND rate.ai_id = ai.id
+WHERE g.game_id = ?
 	`, id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed select game %d", id)
@@ -131,11 +145,25 @@ type AIShortInfo struct {
 func (db *DB) GetLatestAIByGame(id GameID) ([]AIShortInfo, error) {
 	var res []AIShortInfo
 	err := db.DB.Select(&res, `
-		SELECT ai.id AS id, ai.commit AS commit, g.github AS github, g.branch AS branch, rate_ai.rate
+		SELECT ai.id AS id, ai.commit AS commit, g.github AS github, g.branch AS branch, rate.rate
 		FROM ai
 		LEFT JOIN ai AS b ON (ai.created_at < b.created_at AND ai.ai_github_id = b.ai_github_id)
 		INNER JOIN ai_github AS g ON g.id = ai.ai_github_id
-		LEFT JOIN rate_ai ON rate_ai.ai_id = ai.id
+		LEFT JOIN (
+		SELECT o_playout_ai.ai_id, o_result_ai.rate, o_playout.game_id
+		FROM playout AS o_playout
+		INNER JOIN playout_ai AS o_playout_ai ON o_playout_ai.playout_id = o_playout.id
+		INNER JOIN playout_result_ai AS o_result_ai ON o_result_ai.turn = o_playout_ai.turn AND o_result_ai.playout_id = o_playout_ai.playout_id
+		WHERE NOT EXISTS(
+		SELECT 1 FROM playout_ai AS t_playout_ai
+		INNER JOIN playout_result_ai AS t_result_ai ON t_result_ai.turn = t_playout_ai.turn AND t_result_ai.playout_id = t_playout_ai.playout_id
+		INNER JOIN playout AS t_playout ON t_playout.id = t_playout_ai.playout_id
+		WHERE o_playout.game_id = t_playout.game_id
+			AND o_playout_ai.ai_id = t_playout_ai.ai_id
+			AND o_result_ai.created_at <= t_result_ai.created_at
+			AND o_result_ai.id < t_result_ai.id
+		)
+		) AS rate ON rate.game_id = g.game_id AND rate.ai_id = ai.id
 		WHERE ai.state = "ready"
 		AND g.game_id = ?
 		AND b.created_at IS NULL

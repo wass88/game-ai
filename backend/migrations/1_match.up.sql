@@ -40,6 +40,7 @@ CREATE TABLE playout (
     state enum("ready", "running", "completed", "failed") NOT NULL,
     game_id int NOT NULL,
     token varchar(255) NOT NULL,
+    rated boolean DEFAULT false,
     FOREIGN KEY (game_id) REFERENCES game(id)
     );
 CREATE TABLE playout_ai (
@@ -70,14 +71,8 @@ CREATE TABLE playout_result_ai (
     stderr text NOT NULL,
     result int NOT NULL,
     exception text NOT NULL,
+    rate float NOT NULL,
     FOREIGN KEY (playout_id) REFERENCES playout(id),
-    UNIQUE (playout_id, turn)
-    );
-CREATE TABLE rate_ai (
-    id int AUTO_INCREMENT NOT NULL PRIMARY KEY,
-    created_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    ai_id int NOT NULL,
-    rate double NOT NULL,
-    FOREIGN KEY (ai_id) REFERENCES ai(id)
+    UNIQUE (playout_id, turn),
+    INDEX index_created_at(created_at)
     );

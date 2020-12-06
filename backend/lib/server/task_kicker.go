@@ -32,17 +32,10 @@ func (db *taskPlayout) Kick() error {
 	return (*DB)(db).KickPlayout()
 }
 
-type taskRating DB
-
-func (db *taskRating) Kick() error {
-	return (*DB)(db).KickUpdateRating()
-}
-
 func NewTaskKicker(db *DB) *TaskKicker {
 	tasks := []*TaskKick{
 		NewTaskKick((*taskSetupAI)(db), time.Second*600), // Github Rate...
 		NewTaskKick((*taskPlayout)(db), time.Second*60),
-		NewTaskKick((*taskRating)(db), time.Second*60),
 	}
 	return &TaskKicker{tasks}
 }

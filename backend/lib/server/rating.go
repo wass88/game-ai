@@ -1,28 +1,19 @@
 package server
 
 import (
+	"database/sql"
 	"math"
 	"sort"
-	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 )
-
-func (db *DB) KickUpdateRating() error {
-	err := db.UpdateRating()
-	if err != nil {
-		return errors.Wrapf(err, "Update Rating")
-	}
-	return nil
-}
 
 type EroRating struct {
 	InitialRating float64
 	K float64
 }
 
-var eroRating EroRating = EroRating{500, 32}
+var eroRating EroRating = EroRating{1500, 32}
 
 func IndexSort(values []int) []int {
 	type IndexedValue struct {
@@ -73,161 +64,60 @@ func (e EroRating) Rating(old []float64, score []int) []float64 {
 	return res
 }
 
-type PlayoutResultForRating struct {
-	PlayoutID int64
-	CreatedAt time.Time
-	AIs []int64
-	Results []int
-}
-func (db *DB) FetchPlayoutsForRating() (PlayoutResultsForRating, error) {
-	type Result struct {
-		PlayoutID int64     `db:"playout_id"`
-		Turn int64 `db:"turn"`
-		AIID int64 `db:"ai_id"`
-		Result int `db:"result"`
-		CreatedAt time.Time `db:"created_at"`
-	}
-	var results []Result
-	err := db.DB.Select(&results, `
-	SELECT result_ai.playout_id, result_ai.turn, playout_ai.ai_id, result_ai.result, result.created_at
-	FROM playout_result_ai AS result_ai
-	INNER JOIN playout_ai
-	ON playout_ai.playout_id = result_ai.playout_id AND playout_ai.turn = result_ai.turn
-	INNER JOIN playout_result AS result
-	ON result.playout_id = result_ai.playout_id
-	WHERE result_ai.playout_id IN (
-		/* not calclated playout id */
-		SELECT result.playout_id
-		FROM playout_result AS result
-		INNER JOIN playout_ai
-		ON result.playout_id = playout_ai.playout_id
-		LEFT JOIN rate_ai
-		ON playout_ai.ai_id = rate_ai.ai_id
-		GROUP BY result.id
-		HAVING SUM(CASE WHEN ISNULL(rate_ai.updated_at) THEN 1 WHEN result.created_at > rate_ai.updated_at THEN 1 ELSE 0 END) > 0
-	)
-	ORDER BY result_ai.playout_id
-	`)
+func (p *PlayoutID) FetchRated() (bool, error) {
+	res := []bool{}
+	err := p.DB.DB.Select(&res, `SELECT rated FROM playout WHERE id = ?`, p.ID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "Fetch results")
+		return false, errors.Wrapf(err, "Fetch Rated")
 	}
-
-	res := []PlayoutResultForRating{}
-	var result *PlayoutResultForRating
-	for _, r := range results {
-		if result != nil && result.PlayoutID != r.PlayoutID {
-			res = append(res, *result)
-			result = nil
-		}
-		if result == nil {
-			result = &PlayoutResultForRating{
-				PlayoutID: r.PlayoutID,
-				CreatedAt: r.CreatedAt,
-				AIs: []int64{},
-				Results: []int{},
-			}
-		}
-		result.AIs = append(result.AIs, r.AIID)
-		result.Results = append(result.Results, r.Result)
-	}
-	res = append(res, *result)
-	return res, nil
+	return res[0], nil
 }
 
-type PlayoutResultsForRating []PlayoutResultForRating
-func (p PlayoutResultsForRating) AIsForUpdate() []int64 {
-	m := map[int64]int{}
-	for _, playout := range p {
-		for _, ai_id := range playout.AIs {
-			m[ai_id] = 1
-		}
-	}
-	var res []int64
-	for ai  := range m {
-		res = append(res, ai)
-	}
-	return res
-}
-
-type RateAI map[int64]float64
-
-func (db *DB) FetchRateAIs(ai_ids []int64) (RateAI, error) {
-	type Result struct{
-		ID int64 `db:"ai_id"`
-		Rate float64 `db:"rate"`
+func (p *PlayoutID) FetchLatestRate() ([]float64, bool, error) {
+	type Result struct {
+		AIID int64 `db:"ai_id"`
+		Rate sql.NullFloat64 `db:"rate"`
 	}
 	var res []Result
-	query, args, err := sqlx.In(`SELECT ai_id, rate FROM rate_ai WHERE ai_id IN (?)`, ai_ids)
-	query = db.DB.Rebind(query)
+	err := p.DB.DB.Select(&res, `SELECT playout_ai.ai_id, rate.rate
+	FROM playout
+	INNER JOIN playout_ai ON playout_ai.playout_id = playout.id
+	LEFT JOIN (
+	SELECT o_playout_ai.ai_id, o_result_ai.rate, o_playout.game_id
+	  FROM playout AS o_playout
+	  INNER JOIN playout_ai AS o_playout_ai ON o_playout_ai.playout_id = o_playout.id
+	  INNER JOIN playout_result_ai AS o_result_ai ON o_result_ai.turn = o_playout_ai.turn AND o_result_ai.playout_id = o_playout_ai.playout_id
+	  WHERE NOT EXISTS(
+		 SELECT 1 FROM playout_ai AS t_playout_ai
+		   INNER JOIN playout_result_ai AS t_result_ai ON t_result_ai.turn = t_playout_ai.turn AND t_result_ai.playout_id = t_playout_ai.playout_id
+		   INNER JOIN playout AS t_playout ON t_playout.id = t_playout_ai.playout_id
+		   WHERE o_playout.game_id = t_playout.game_id
+			 AND o_playout_ai.ai_id = t_playout_ai.ai_id
+			 AND o_result_ai.created_at <= t_result_ai.created_at
+			 AND o_result_ai.id < t_result_ai.id
+		 )
+	) AS rate ON rate.ai_id = playout_ai.ai_id AND playout.game_id = rate.game_id
+	WHERE playout.id = ?
+	ORDER BY playout_ai.turn
+	`, p.ID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "sqlx.in stmt")
+		return nil, false, errors.Wrapf(err, "Fetch Latest Rate")
 	}
-	err = db.DB.Select(&res, query, args...)
-	if err != nil {
-		return nil, errors.Wrapf(err, "select rate")
-	}
-	rating := RateAI{}
-	for _, a := range ai_ids {
-		rating[a] = eroRating.InitialRating
-	}
+	rate := []float64{}
+	ais := map[int64]interface{}{}
 	for _, r := range res {
-		rating[r.ID] = r.Rate
-	}
-	return rating, nil
-}
-
-
-func (p PlayoutResultsForRating) CalculateRating(rate RateAI) (RateAI, error) {
-	for _, r := range p {
-		rates := []float64{}
-		for _, ai := range r.AIs {
-			if _, ok := rate[ai]; !ok {
-				return nil, errors.Errorf("Missing rating %d in %v", ai, rate)
-			}
-			rates = append(rates, rate[ai])
+		t := eroRating.InitialRating
+		if r.Rate.Valid {
+			t = r.Rate.Float64
 		}
-		rates = eroRating.Rating(rates, r.Results)
-		for i, ai := range r.AIs {
-			rate[ai] = rates[i]
-		}
-	}
-	return rate, nil
-}
+		rate = append(rate, t)
 
-func (db *DB) UpdateRateAIs(r RateAI) error{
-	type RateDB struct {
-		AIID int64 `db:"ai_id"`
-		Rate float64 `db:"rate"`
+		ais[r.AIID] = nil
 	}
-	update := []RateDB{}
-	for ai, rate := range r {
-		update = append(update, RateDB{ai, rate})
-	}
-	_, err := db.DB.NamedExec(`INSERT INTO rate_ai (ai_id, rate) VALUES(:ai_id, :rate)`, update)
-	if err != nil {
-		return errors.Wrapf(err, "Update rate")
-	}
-	return nil
-}
 
-
-//UpdateRating calcs all ratings
-func (db *DB) UpdateRating() error {
-	playouts, err := db.FetchPlayoutsForRating()
-	if err != nil {
-		return errors.Wrapf(err, "Fetch playouts")
+	selfMatch := false
+	if len(ais) < len(res) {
+		selfMatch = true
 	}
-	rates, err := db.FetchRateAIs(playouts.AIsForUpdate())
-	if err != nil {
-		return errors.Wrapf(err, "Fetch Rates")
-	}
-	rates, err = playouts.CalculateRating(rates)
-	if err != nil {
-		return errors.Wrapf(err, "Caluclate Rates")
-	}
-	err = db.UpdateRateAIs(rates)
-	if err != nil {
-		return errors.Wrapf(err, "Update Rates")
-	}
-	return nil
+	return rate, selfMatch, nil
 }
