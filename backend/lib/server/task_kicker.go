@@ -36,7 +36,7 @@ func NewTaskKicker(db *DB) *TaskKicker {
 	tasks := []*TaskKick{
 		NewTaskKick((*taskSetupAI)(db), time.Second*600), // Github Rate...
 		NewTaskKick((*taskPlayout)(db), time.Second*10),
-		NewTaskKick(NewAutoPlayout(db), time.Second*10),
+		NewTaskKick(NewAutoPlayout(db), time.Second*600),
 	}
 	return &TaskKicker{tasks}
 }
