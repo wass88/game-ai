@@ -25,7 +25,7 @@ export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
       <h1>AIs</h1>
       <Link to={`/games/${gameID}/matches`}>List of Matches</Link>
       <Button onClick={() => setShow(true)}>
-        <p>New AI Config</p>
+        <p>Create New Config of AI</p>
       </Button>
     </div>
   );
@@ -97,7 +97,7 @@ function FormGithub(setShow: any) {
   );
 
   function url() {
-    return `https://github.com/${github}/tree/${branch}`;
+    return `https://github.com/${github.value}/tree/${branch.value}`;
   } //validate() !== undefined || sending
   return (
     <>
@@ -109,7 +109,7 @@ function FormGithub(setShow: any) {
         Branch Name: (eg: master)
       </Input>
       <p>
-        Github Page:{" "}
+        Please Check the Github Page:{" "}
         <a target="_blank" rel="noopener noreferrer" href={url()}>
           {url()}
         </a>

@@ -6,14 +6,6 @@ import (
 	"github.com/wass88/gameai/lib/protocol"
 )
 
-func TestNewPlayout(t *testing.T) {
-	db := mockPlayoutDB()
-	_, err := db.NewPlayout(1, []int64{1, 2})
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestUpdatePlayout(t *testing.T) {
 	db := mockPlayoutDB()
 	playoutID := PlayoutID{1, db}
@@ -86,7 +78,7 @@ func TestCheckToken(t *testing.T) {
 
 func TestCreatePlayout(t *testing.T) {
 	db := mockPlayoutDB()
-	id, err := db.CreatePlayout(1, []AIID{1, 1})
+	id, err := db.CreatePlayout(1, []AIID{1, 1}, false)
 	if err != nil {
 		t.Fatal(err)
 	}

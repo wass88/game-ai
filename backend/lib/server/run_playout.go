@@ -121,7 +121,7 @@ func HandlerAddMatch(db *DB) func(c echo.Context) error {
 		for _, ai := range req.AIID {
 			aiid = append(aiid, AIID(ai))
 		}
-		id, err := db.CreatePlayout(GameID(req.GameID), aiid)
+		id, err := db.CreatePlayout(GameID(req.GameID), aiid, false)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Create %v", err)
 		}
@@ -140,33 +140,6 @@ const TokenLen = 32
 type PlayoutID struct {
 	ID int64
 	DB *DB
-}
-
-//NewPlayout creates new playout
-func (db *DB) NewPlayout(gameID int64, aiIDs []int64) (*PlayoutID, error) {
-	token, err := GenerateRandomString(TokenLen)
-	if err != nil {
-		return nil, err
-	}
-	res, err := db.DB.Exec(
-		`INSERT INTO playout (state, game_id, token) VALUES (?, ?, ?)`,
-		"ready", gameID, token)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Failed creating playout")
-	}
-	playoutID, err := res.LastInsertId()
-	if err != nil {
-		return nil, err
-	}
-	for i, aiID := range aiIDs {
-		_, err := db.DB.Exec(
-			`INSERT INTO playout_ai (playout_id, ai_id, turn) VALUES (?, ?, ?)`,
-			playoutID, aiID, i)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Faild creating playout_ai")
-		}
-	}
-	return &PlayoutID{playoutID, db}, nil
 }
 
 //PlayerCmd is AI config
@@ -314,10 +287,10 @@ func (p *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
 	for i, result := range results {
 		_, err := p.DB.DB.Exec(`
 			INSERT INTO playout_result_ai (turn, playout_id, result, stderr, exception, rate)
-			VALUES (?, ?, ?, ?, ?)
+			VALUES (?, ?, ?, ?, ?, ?)
 		`, i, p.ID, result.Result, result.Stderr, result.Exception, rate[i])
 		if err != nil {
-			return errors.Wrapf(err, "Failed insert playout_result_ai")
+			return errors.Wrapf(err, "insert playout_result_ai")
 		}
 	}
 	_, err = p.DB.DB.Exec(`
@@ -352,7 +325,7 @@ func (p *PlayoutID) CalclateRate(results []protocol.ResultPlayerA) ([]float64, e
 }
 
 //CreatePlayout creates new playout
-func (db *DB) CreatePlayout(gameID GameID, ais []AIID) (int64, error) {
+func (db *DB) CreatePlayout(gameID GameID, ais []AIID, rated bool) (int64, error) {
 	// TODO: not rated playout match
 	tx, err := db.DB.Beginx()
 	if err != nil {
@@ -363,9 +336,9 @@ func (db *DB) CreatePlayout(gameID GameID, ais []AIID) (int64, error) {
 		return -1, errors.Wrapf(err, "Generate Random")
 	}
 	res, err := tx.Exec(`
-		INSERT INTO playout (game_id, state, token)
-		VALUES (?, "ready", ?);
-	`, gameID, token)
+		INSERT INTO playout (game_id, state, token, rated)
+		VALUES (?, "ready", ?, ?);
+	`, gameID, token, rated)
 	playoutID, err := res.LastInsertId()
 	if err != nil {
 		return -1, errors.Wrapf(err, "Insert playout")
