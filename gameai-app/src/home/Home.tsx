@@ -17,10 +17,23 @@ export default function Home() {
               </p>
               <p>Your account is {you.authority}.</p>
 
-              Reversi: {" "}
-              <Link to="/games/1/matches">Matches</Link> {" "}
+              <p>
+                Reversi: {" "}
+                <Link to="/games/1/matches">Matches</Link> {" "}
+                <Link to="/games/1/githubs">AIs</Link>
+              </p>
 
-              <Link to="/games/1/githubs">AIs</Link>
+              <p>
+                戦い方
+              </p>
+              <ol>
+                <li>AIを作る</li>
+                <li>Dockerfileを書く</li>
+                <li>Githubにpush</li>
+                <li>AIを登録</li>
+                <li>戦いが始まる</li>
+              </ol>
+              <p><a href="https://github.com/wass88/reversi-random">wass88/reversi-random</a>を参照のこと</p>
             </>
           );
         }
