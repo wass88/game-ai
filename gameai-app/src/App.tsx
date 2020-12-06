@@ -4,10 +4,12 @@ import Home from "./home/Home";
 import { MatchesPage } from "./matches/Matches";
 import { MatchPage } from "./match/Match";
 import { GithubsPage } from "./githubs/Githubs";
+import { AIPage } from "./ai/ai";
 import API from "./api";
 
 
 import "./App.css";
+import whyDidYouRender from "@welldone-software/why-did-you-render";
 
 export const LoginUserContext = React.createContext<any>(null)
 
@@ -21,7 +23,7 @@ export default function App() {
           <header>
             <Link to="/"> <h1>Game AI</h1> </Link>
             {(()=>{
-              if (you != null) {
+              if (you != null && you.name != null) {
                 return <p className="userinfo"> you are {you.name}</p>
               }
             })() }
@@ -36,6 +38,9 @@ export default function App() {
               </Route>
               <Route path="/matches/:id" exact>
                 <MatchPage />
+              </Route>
+              <Route path="/ai/:id" exact>
+                <AIPage />
               </Route>
               <Route path="/games/:gameID/githubs" exact>
                 <GithubsPage />

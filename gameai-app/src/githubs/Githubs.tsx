@@ -5,6 +5,8 @@ import API from "../api";
 import * as APIType from "../api-types";
 import "./Githubs.css";
 import { Button, Input, Popup, useStateValidate, Format } from "../components";
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
 
 export function GithubsPage() {
   const { gameID } = useParams();
@@ -44,9 +46,13 @@ export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
 }
 
 export function AIGithubDesc(ai_github: APIType.AIGithub) {
+  let updated_at = ai_github?.latest_ai?.updated_at;
+  dayjs.extend(relativeTime)
+  let before_updated_at = (updated_at) ? dayjs(updated_at).fromNow() : "none"
+ 
   return (
     <div key={ai_github.id}>
-      <a
+      <a className="no-decoration"
         href={
           "https://github.com/" +
           ai_github?.github +
@@ -55,9 +61,14 @@ export function AIGithubDesc(ai_github: APIType.AIGithub) {
         }
       >
         <h2>
-          {ai_github?.github} ({ai_github?.branch}){" "}
-          {ai_github?.latest_ai?.state}
+          {ai_github?.github} ({ai_github?.branch})
         </h2>
+        <p>
+          {" ["} {ai_github?.latest_ai?.state ?? "finding"} {"] "}
+          { "Rate: " }{ai_github?.latest_ai?.rate ?? "(not rated)"} {" "}
+          {" Commit ID: "} {ai_github?.latest_ai?.commit.substr(0, 6 ?? "none" )}
+          {" Last Update: "} {before_updated_at}
+        </p>
       </a>
     </div>
   );

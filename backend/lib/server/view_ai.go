@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
@@ -13,6 +14,7 @@ type AIRG struct {
 	AIGIthubID AIGithubID `json:"ai_github_id"`
 	Commit     string     `json:"commit"`
 	State      AIState    `json:"state"`
+	UpdatedAt  time.Time `json:"updated_at"`
 	Rate       *float64 `json:"rate"`
 }
 
@@ -69,6 +71,7 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 		AIID     *AIID            `db:"ai_id"`
 		AIStatus *AIState         `db:"ai_status"`
 		AICommit *string          `db:"ai_commit"`
+		AIUpdatedAt *time.Time    `db:"ai_updated_at"`
 		AIRate   *float64         `db:"ai_rate"`
 	}
 	var sel []Result
@@ -77,11 +80,12 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 	gm.name AS game_name, u.name AS user_name,
 	g.updating AS updating,
 	g.github AS github, g.branch AS branch,
-	ai.id AS ai_id, ai.state AS ai_status, ai.commit AS ai_commit, rate.rate AS ai_rate
+	ai.id AS ai_id, ai.state AS ai_status, ai.commit AS ai_commit,
+	ai.updated_at AS ai_updated_at, rate.rate AS ai_rate
 FROM ai_github AS g
 INNER JOIN game AS gm ON gm.id = g.game_id
 INNER JOIN user AS u ON u.id = g.user_id
-INNER JOIN LATERAL (SELECT * FROM ai
+LEFT JOIN LATERAL (SELECT * FROM ai
 	WHERE ai.ai_github_id = g.id
 	ORDER BY ai.created_at DESC LIMIT 1) AS ai ON ai.ai_github_id = g.id
 LEFT JOIN (
@@ -126,6 +130,7 @@ WHERE g.game_id = ?
 				AIGIthubID: s.ID,
 				State:      *s.AIStatus,
 				Commit:     *s.AICommit,
+				UpdatedAt:  *s.AIUpdatedAt,
 				Rate:       s.AIRate,
 			}
 		}

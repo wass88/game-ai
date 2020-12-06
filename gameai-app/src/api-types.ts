@@ -11,6 +11,7 @@ export interface AI {
     commit: string;
     state?: string;
     ai_github: AIGithub;
+    updated_at?: string; // date-time
     rate?: number;
 }
 export interface AIGithub {

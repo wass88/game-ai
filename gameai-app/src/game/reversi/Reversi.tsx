@@ -33,11 +33,17 @@ export function Reversi(props: {
         return false;
       }
       const inst = r.split(" ");
+      if (inst[0] === "") {
+        console.warn("empty inst", inst);
+        return false;
+      }
       if (inst[0] !== "put") {
         console.error("Unknown inst", inst);
+        return false;
       }
       const y = Number.parseInt(inst[1], 10);
       const x = Number.parseInt(inst[2], 10);
+      console.log(board)
       board[y][x] = current_player;
       for (let d = 0; d < 8; d++) {
         for (let l = 1; l <= SIZE; l++) {
