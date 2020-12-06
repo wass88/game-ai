@@ -6,12 +6,10 @@ import { MatchPage } from "./match/Match";
 import { GithubsPage } from "./githubs/Githubs";
 import { AIPage } from "./ai/ai";
 import API from "./api";
-
+import { LoginUserContext } from "./login"
 
 import "./App.css";
 import whyDidYouRender from "@welldone-software/why-did-you-render";
-
-export const LoginUserContext = React.createContext<any>(null)
 
 export default function App() {
   const [you] = API.useAPI(API.you, []);

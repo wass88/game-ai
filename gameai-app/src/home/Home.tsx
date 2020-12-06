@@ -1,6 +1,6 @@
 import React, {useContext} from "react";
 import { Link } from "react-router-dom";
-import {LoginUserContext} from "../App";
+import { LoginUserContext } from "../login";
 
 export default function Home() {
   const you = useContext(LoginUserContext)

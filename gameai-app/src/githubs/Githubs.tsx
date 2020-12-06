@@ -1,5 +1,5 @@
 import React from "react";
-import { useState } from "react";
+import { useState , useContext } from "react";
 import { useParams, useHistory, Link} from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
@@ -7,6 +7,7 @@ import "./Githubs.css";
 import { Button, Input, Popup, useStateValidate, Format } from "../components";
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { isVisitor, LoginUserContext } from "../login"
 
 export function GithubsPage() {
   const { gameID } = useParams();
@@ -14,6 +15,7 @@ export function GithubsPage() {
   return Githubs(gameID, githubs);
 }
 export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
+  const you = useContext(LoginUserContext)
   const [show, setShow] = useState(false);
   const popup = (
     <Popup show={show} setShow={setShow}>
@@ -24,9 +26,16 @@ export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
     <div>
       <h1>AIs</h1>
       <Link to={`/games/${gameID}/matches`}>List of Matches</Link>
-      <Button onClick={() => setShow(true)}>
-        <p>Create New Config of AI</p>
-      </Button>
+      {
+        (() => {
+          if (isVisitor(you)) {
+            return <p> AIを作る権限がありません。{you?.github_name ?? ""} </p>
+          }
+          return <Button onClick={() => setShow(true)}>
+            <p>Create New Config of AI</p>
+          </Button>
+        })()
+      }
     </div>
   );
   if (ai_githubs === null) {

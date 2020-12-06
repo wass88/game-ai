@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useParams, Link } from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
 import "./Matches.css";
 import { MatchDesc } from "../match/Match";
 import { Button, Popup, Select } from "../components";
+import { isVisitor, LoginUserContext } from "../login"
 
 export function MatchesPage() {
   const { gameID } = useParams();
@@ -12,6 +13,7 @@ export function MatchesPage() {
   return Matches(gameID, matches);
 }
 export function Matches(game_id: number, matches: APIType.Match[] | null) {
+  const you = useContext(LoginUserContext)
   const [show, setShow] = useState(false);
   const [created, setCreated] = useState(false);
   const popup = (
@@ -41,9 +43,14 @@ export function Matches(game_id: number, matches: APIType.Match[] | null) {
         }
         return <></>;
       })()}
-      <Button onClick={() => setShow(true)}>
+      {(() => {
+        if (isVisitor(you)) {
+          return <p>Matchを作る権限がありません。</p>
+        }
+        return <Button onClick={() => setShow(true)}>
         <p>Create Match</p>
       </Button>
+      })()}
       <div className="match-list">{matchList}</div>
       {popup}
     </>
