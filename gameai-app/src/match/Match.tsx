@@ -48,7 +48,7 @@ export function MatchDesc(match: APIType.Match) {
       <Link className="no-line" to={"/matches/" + match.id}>
         <div className="match">
           <p className="head">
-            [{match.state}] {match.id}
+            [{match.state}] #{match.id}
           </p>
           {(() => {
             if (match.exception !== "")
