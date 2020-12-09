@@ -1,4 +1,4 @@
-GO_ALPINE=GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build
+GO_ALPINE=GOOS=linux GOARCH=arm CGO_ENABLED=0 go build
 GO=go build
 
 build: target/server target/playout target/kick target/container
