@@ -4,7 +4,7 @@ import Home from "./home/Home";
 import { MatchesPage } from "./matches/Matches";
 import { MatchPage } from "./match/Match";
 import { GithubsPage } from "./githubs/Githubs";
-import { AIPage } from "./ai/ai";
+import { AIPage } from "./ai/AI";
 import API from "./api";
 import { LoginUserContext } from "./login"
 

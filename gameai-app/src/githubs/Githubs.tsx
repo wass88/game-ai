@@ -7,6 +7,7 @@ import "./Githubs.css";
 import { Button, Input, Popup, useStateValidate, Format } from "../components";
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import utc from 'dayjs/plugin/utc'
 import { isVisitor, LoginUserContext } from "../login"
 
 export function GithubsPage() {
@@ -57,7 +58,9 @@ export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
 export function AIGithubDesc(ai_github: APIType.AIGithub) {
   let updated_at = ai_github?.latest_ai?.updated_at;
   dayjs.extend(relativeTime)
-  let before_updated_at = (updated_at) ? dayjs(updated_at).fromNow() : "none"
+  dayjs.extend(utc);
+  console.log(dayjs(updated_at).isUTC(), dayjs(updated_at).toISOString());
+  let before_updated_at = (updated_at) ? dayjs(updated_at).from(dayjs.utc()) : "none"
  
   return (
     <div key={ai_github.id}>
@@ -72,6 +75,15 @@ export function AIGithubDesc(ai_github: APIType.AIGithub) {
         <h2>
           {ai_github?.github} ({ai_github?.branch})
         </h2>
+      </a>
+      <a className="no-decoration"
+        href={
+          "https://github.com/" +
+          ai_github?.github +
+          "/tree/" +
+          ai_github?.latest_ai?.commit
+        }
+      >
         <p>
           {" ["} {ai_github?.latest_ai?.state ?? "finding"} {"] "}
           { "Rate: " }{ai_github?.latest_ai?.rate ?? "(not rated)"} {" "}
