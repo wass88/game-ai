@@ -48,6 +48,7 @@ func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.
 		fmt.Printf("Wait...P%d\n", cn)
 		s, err := cp.Wait()
 		if err != nil {
+			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
 			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected EOF: %s", cn, err.Error())
 			result.Result[cn].Result = -64
 			result.Result[on].Result = 64
@@ -62,6 +63,7 @@ func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.
 
 		a, err := parseAction(s)
 		if err != nil {
+			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
 			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected Action: %s", cn, err.Error())
 			result.Result[cn].Result = -64
 			result.Result[on].Result = 64
@@ -69,6 +71,7 @@ func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.
 		}
 		err = r.act(a)
 		if err != nil {
+			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
 			result.Result[cn].Exception = fmt.Sprintf("P%d: Wrong Action: %s", cn, err.Error())
 			result.Result[cn].Result = -64
 			result.Result[on].Result = 64

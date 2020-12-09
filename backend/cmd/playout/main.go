@@ -31,8 +31,10 @@ func main() {
 		fmt.Printf("Player #%d: %s\n", i, player)
 	}
 	fmt.Printf("=============    Start     ===========\n")
-	_, err = playout.StartPlayout(game, send, cmds)
+	res, err := playout.StartPlayout(game, send, cmds)
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("=============    Result   ===========\n")
+	fmt.Printf("%v", res)
 }
