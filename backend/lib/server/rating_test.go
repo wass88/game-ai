@@ -14,22 +14,15 @@ func TestEroRating(t *testing.T) {
 	r = EroRating{K:32}.Rating([]float64{1500,1500,1500,1500},[]int{1, 2, 1, 0})
 	t.Logf("Rate %v", r)
 	if !(r[1] > r[0] && r[1] > r[2] && r[0] > r[3] && r[2] > r[3]) {
-		t.Fatalf("Expeted [1] > [0] & [1] > [2] & [0] > [3] & [2] > [3]. %v", r)
+		t.Fatalf("Expected [1] > [0] & [1] > [2] & [0] > [3] & [2] > [3]. %v", r)
+	}
+	r = EroRating{K:32}.Rating([]float64{1500,1500},[]int{1, 1})
+	t.Logf("Rate %v", r)
+	if r[0] - r[1] > 1e-5 {
+		t.Fatalf("Expected %f == %f", r[0], r[1])
 	}
 }
 
-func TestFetchRated(t *testing.T) {
-	db := mockPlayoutResultDB()
-	playout := PlayoutID{1, db}
-	rated, err := playout.FetchRated()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if rated {
-		t.Fatalf("ID: 1 is not rated")
-	}
-	t.Logf("%v", rated)
-}
 
 func TestFetchLatestRate(t *testing.T) {
 	db := mockPlayoutResultDB()

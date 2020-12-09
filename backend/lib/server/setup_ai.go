@@ -298,15 +298,11 @@ func (ai *AINeedSetup) KickSetup(db *DB) error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed Update State")
 	}
-	err = cmd.Run()
+	bytes, err := cmd.CombinedOutput()
+	log.Printf("Output: %s\n", bytes)
 	if err != nil {
 		ai.ID.UpdateState(db, "failed")
-		log.Printf("%v\n", errors.Wrapf(err, "Failed cmd Start: %v", cmd))
+		return errors.Wrapf(err, "Failed to Run: err")
 	}
-	bytes, err := cmd.CombinedOutput()
-	if err != nil {
-		return errors.Wrapf(err, "Combined Output")
-	}
-	log.Printf("Output: %v\n", bytes)
 	return nil
 }

@@ -187,7 +187,7 @@ func (db *DB) GetOldestPlayoutTask() (*PlayoutTask, error) {
 		INNER JOIN playout_ai ON playout_ai.playout_id = p.id
 		INNER JOIN ai ON ai.id = playout_ai.ai_id
 		INNER JOIN ai_github ON ai_github.id = ai.ai_github_id
-		ORDER BY playout_ai.turn ASC
+		ORDER BY playout_ai.turn
 	`)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed select playout")
