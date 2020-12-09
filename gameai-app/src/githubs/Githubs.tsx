@@ -59,7 +59,6 @@ export function AIGithubDesc(ai_github: APIType.AIGithub) {
   let updated_at = ai_github?.latest_ai?.updated_at;
   dayjs.extend(relativeTime)
   dayjs.extend(utc);
-  console.log(dayjs(updated_at).isUTC(), dayjs(updated_at).toISOString());
   let before_updated_at = (updated_at) ? dayjs(updated_at).from(dayjs.utc()) : "none"
  
   return (
