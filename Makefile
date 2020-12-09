@@ -14,15 +14,14 @@ rsync:
 		sudo mkdir -p ~$(WEB_USER)/game-ai/backend/.data/ai-docker &&\
 		sudo chown -R $(WEB_USER) ~$(WEB_USER)/game-ai &&\
 		sudo chgrp -R $(WEB_USER) ~$(WEB_USER)/game-ai "
-	$(RSYNC_WEB) ./backend/bin/ $(ADDR):~$(WEB_USER)/game-ai/backend/bin
-	$(RSYNC_WEB) ./backend/configs/ $(ADDR):~$(WEB_USER)/game-ai/backend/configs
-	$(RSYNC_WEB) ./backend/migrations/ $(ADDR):~$(WEB_USER)/game-ai/backend/migrations
+	$(RSYNC_WEB) ./backend/bin ./backend/configs ./backend/migrations \
+	             $(ADDR):~$(WEB_USER)/game-ai/backend
 	$(RSYNC_WEB) ./gameai-app/build/ $(ADDR):~$(WEB_USER)/game-ai/frontend
 
 restart-service:
 	ssh $(ADDR) "\
-		systemctl restart game-ai-web &&\
-		systemctl restart game-ai-kick"
+		sudo systemctl restart game-ai-web &&\
+		sudo systemctl restart game-ai-kick"
 
 init-deploy: add-user rsync install-mysql install-nginx install-docker install-migrate install-service
 
