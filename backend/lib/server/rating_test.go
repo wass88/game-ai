@@ -21,6 +21,11 @@ func TestEroRating(t *testing.T) {
 	if r[0] - r[1] > 1e-5 {
 		t.Fatalf("Expected %f == %f", r[0], r[1])
 	}
+	r = EroRating{K:32}.Rating([]float64{2812,140},[]int{-14, 14})
+	t.Logf("Rate %v", r)
+	if r[0] >= 2812 {
+		t.Fatalf("Expected %f > 2812, %f", r[0], r[1])
+	}
 }
 
 

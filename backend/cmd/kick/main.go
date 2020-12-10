@@ -31,6 +31,11 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+		} else if cmd == "autoplayout" { 
+			err := server.NewAutoPlayout(db).Kick()
+			if err != nil {
+				panic(err)
+			}
 		} else {
 			panic(fmt.Sprintf("Unknown command %s", cmd))
 		}

@@ -304,10 +304,12 @@ func (p *PlayoutID) Complete(results []protocol.ResultPlayerA) error {
 
 func (p *PlayoutID) CalclateRate(results []protocol.ResultPlayerA) ([]float64, error) {
 	rated, err := p.FetchRated()
+	fmt.Printf("rated: %v\n", rated)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Fetch Rated")
 	}
 	rate, selfMatch, err := p.FetchLatestRate()
+	fmt.Printf("rate: %v, %v\n", rate, selfMatch)
 	if err != nil {
 		return nil, errors.Wrapf(err, "")
 	}
@@ -321,12 +323,14 @@ func (p *PlayoutID) CalclateRate(results []protocol.ResultPlayerA) ([]float64, e
 	for _, result := range results {
 		score = append(score, result.Result)
 	}
-	return eroRating.Rating(rate, score), nil
+	fmt.Printf("score: %v\n", score)
+	newRate := eroRating.Rating(rate, score)
+	fmt.Printf("new: %v\n", newRate)
+	return newRate, nil
 }
 
 //CreatePlayout creates new playout
 func (db *DB) CreatePlayout(gameID GameID, ais []AIID, rated bool) (int64, error) {
-	// TODO: not rated playout match
 	tx, err := db.DB.Beginx()
 	if err != nil {
 		return -1, errors.Wrapf(err, "Beginx")
