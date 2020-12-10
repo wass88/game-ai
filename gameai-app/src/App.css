@@ -15,5 +15,20 @@ header {
   justify-content: space-between;
 }
 
+header h1 {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+header h1 .head-icon {
+  width: 48px;
+  height: 48px;
+  background: url("/icon.svg");
+  background-size: contain;
+}
+header h1 .title {
+  margin-inline-start: 8px;
+}
+
 .userinfo {
 }

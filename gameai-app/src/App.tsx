@@ -19,7 +19,10 @@ export default function App() {
       <div id="outer">
         <div id="inner">
           <header>
-            <Link to="/"> <h1>Game AI</h1> </Link>
+            <Link to="/"> <h1 className="">
+              <div className="head-icon"></div>
+              <div className="title">Game AI</div>
+            </h1> </Link>
             {(()=>{
               if (you != null && you.name != null) {
                 return <p className="userinfo"> you are {you.name}</p>
