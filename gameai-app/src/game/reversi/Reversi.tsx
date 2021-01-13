@@ -1,15 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import "./Reversi.css";
-import { Button } from "../../components/Button";
+import {GamePlayer} from "../GamePlayer"
 
-export function Reversi(props: {
+function ReversiView(props: {
   first: string;
   second: string;
-  record: string;
+  record: string[];
+  nth_played: number
 }) {
-  const first = props.first;
-  const second = props.second;
-  const record = props.record.split("\n");
+  const {first, second, record, nth_played} = props;
   const EMPTY = 0;
   const FIRST = 1;
   const SECOND = 2;
@@ -17,7 +16,6 @@ export function Reversi(props: {
   const board = Array.from(new Array(SIZE), () =>
     Array.from(new Array(SIZE), () => EMPTY)
   );
-  const [nth_played, set_nth_played] = useState(record.length);
   board[4][3] = board[3][4] = FIRST;
   board[3][3] = board[4][4] = SECOND;
   const D8Y = [1, 0, -1, -1, -1, 0, 1, 1];
@@ -86,7 +84,6 @@ export function Reversi(props: {
   if (second_pieces === 0) {
     first_pieces = SIZE * SIZE;
   }
-
   return (
     <>
       <h3>
@@ -124,26 +121,16 @@ export function Reversi(props: {
             })}
           </tbody>
         </table>
-        <div>
-        <div>
-          <Button onClick={() => set_nth_played(nth_played - 1)}>Prev</Button>
-          <Button onClick={() => set_nth_played(nth_played + 1)}>Next</Button>
-        </div>
-          {record.map((e, i) => {
-            return (
-              <span
-                onClick={() => set_nth_played(i + 1)}
-                key={i}
-                className={nth_played === i + 1 ? "highlight" : ""}
-              >
-                {i % 2 === 1 ? "(" : ""}
-                {e}
-                {i % 2 === 1 ? ")" : ""}
-              </span>
-            );
-          })}
-        </div>
-      </div>
+     </div>
     </>
   );
+}
+export function Reversi(props: {
+  first: string;
+  second: string;
+  record: string;
+}) {
+  return <>
+    <GamePlayer first={props.first} second={props.second} record={props.record} GameView={ReversiView}></GamePlayer>
+  </>
 }

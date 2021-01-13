@@ -1,0 +1,47 @@
+.game27-board {
+  display: grid;
+  justify-items: center;;
+  grid-template-columns: repeat(9, 32px);
+  grid-template-rows: repeat(19, 18px);
+}
+.chip {
+  display: inline-block;
+  background: var(--chip-color);
+  border:solid 2px var(--chip-border);
+  border-radius: 100%;
+  box-shadow:
+   var(--chip-border) 0px 1px 1px,
+   var(--chip-border) 0px 2px 1px,
+   var(--chip-border) 0px 3px 1px,
+   var(--chip-border) 0px 4px 1px,
+   var(--chip-border) 0px 5px 1px,
+   var(--chip-border) 0px 6px 1px,
+   var(--chip-border) 0px 7px 1px,
+   var(--chip-border) 0px 8px 1px;
+}
+.chip.red {
+  height: 18px;
+  width: 23px;
+  --chip-color: hsla(0, 100%, 51%, 1);
+  --chip-border:hsla(0, 100%, 32%, 1);
+}
+.chip.blue {
+  height: 18px;
+  width: 23px;
+  --chip-color:hsla(235, 100%, 58%, 1);
+  --chip-border:hsla(235, 100%, 32%, 1);
+}
+.chip.board {
+  height: 18px;
+  width: 28px;
+  --chip-color: hsl(133, 51%, 44%);
+  --chip-border: hsl(133, 51%, 28%);
+}
+.chip.board-0 {
+  --chip-color:hsla(235, 100%, 44%, 1);
+  --chip-border: hsla(235, 100%, 24%, 1);
+}
+.chip.board-8 {
+  --chip-color:hsla(0, 100%, 44%, 1);
+  --chip-border: hsla(0, 100%, 24%, 1);
+}

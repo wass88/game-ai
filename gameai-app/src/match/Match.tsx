@@ -3,23 +3,26 @@ import { useParams, Link } from "react-router-dom";
 import API from "../api";
 import * as APIType from "../api-types";
 import { Reversi } from "../game/reversi/Reversi";
+import { Game27 } from "../game/game27/Game27";
 import "./Match.css";
 
 export function MatchPage() {
-  const { id } = useParams();
+  let { id } = useParams();
+  id = parseInt(id, 10);
   const [match] = API.useAPI(API.match, [id]);
-  return Match(match);
+  const gameID = match?.game.id;
+  return Match(match, gameID);
 }
-export function Match(match: APIType.Match | null) {
+export function Match(match: APIType.Match | null, gameID: number | undefined) {
   return (
     <>
       <Link to={"/games/" + match?.game?.id + "/matches"}>
         <h1>Match of {match?.game?.name}</h1>
       </Link>
       {(() => {
-        if (match)
-          return (
-            <>
+        if (match) {
+            if (gameID === 1) {
+            return <>
               <Reversi
                 first={match?.results[0].ai?.ai_github.github || "first"}
                 second={match?.results[0].ai?.ai_github.github || "second"}
@@ -27,7 +30,18 @@ export function Match(match: APIType.Match | null) {
               />
               {MatchDesc(match)}
             </>
-          );
+            }
+            if (gameID === 2) {
+            return <>
+              <Game27
+                first={match?.results[0].ai?.ai_github.github || "first"}
+                second={match?.results[0].ai?.ai_github.github || "second"}
+                record={match?.record || ""}
+              />
+              {MatchDesc(match)}
+            </>
+            }
+        }
         return <p>None</p>;
       })()}
       {match?.results.map((result, i) => (

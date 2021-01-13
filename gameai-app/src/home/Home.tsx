@@ -24,6 +24,12 @@ export default function Home() {
               </p>
 
               <p>
+                Game27: {" "}
+                <Link to="/games/2/matches">Matches</Link> {" "}
+                <Link to="/games/2/githubs">AIs</Link>
+              </p>
+
+              <p>
                 戦い方
               </p>
               <ol>
@@ -34,6 +40,7 @@ export default function Home() {
                 <li>戦いが始まる</li>
               </ol>
               <p><a href="https://github.com/wass88/reversi-random">wass88/reversi-random</a>を参照のこと</p>
+              <p>もしくは<a href="https://github.com/wass88/game-27-ai">wass88/game-27-ai</a>を参照のこと</p>
             </>
           );
         }

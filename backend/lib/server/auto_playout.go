@@ -24,7 +24,9 @@ type PlayoutConfig struct {
 }
 
 func (a *AutoPlayout) RandomPlayoutConfig() (*PlayoutConfig, error) {
-	// TODO:  Only game 1, two players 
+	// TODO: Only two players and GameID=2
+	// TODO: Fix Order BY ID
+	gameID:= 2
 	res := []AIID{}
 	err := a.DB.DB.Select(&res, `
 		SELECT ai.id
@@ -36,16 +38,16 @@ func (a *AutoPlayout) RandomPlayoutConfig() (*PlayoutConfig, error) {
 			ORDER BY created_at DESC, ai.id DESC
 			LIMIT 1
 		) AS ai ON ai.ai_github_id = ai_github.id
-		WHERE ai.state = "ready"
+		WHERE ai.state = "ready" && ai_github.game_id = ?
 		ORDER BY RAND()
-		LIMIT 2`)
+		LIMIT 2`, gameID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Select Random")
 	}
 	if len(res) < 2 {
 		return nil, errors.Errorf("Missing enough ai config")
 	}
-	return &PlayoutConfig{1, res}, nil
+	return &PlayoutConfig{GameID(gameID), res}, nil
 }
 
 func (p *AutoPlayout) CreatePlayoutFromConfig(c *PlayoutConfig) (error) {

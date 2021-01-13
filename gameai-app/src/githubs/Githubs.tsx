@@ -11,7 +11,8 @@ import utc from 'dayjs/plugin/utc'
 import { isVisitor, LoginUserContext } from "../login"
 
 export function GithubsPage() {
-  const { gameID } = useParams();
+  let { gameID } = useParams();
+  gameID = parseInt(gameID, 10);
   const [githubs] = API.useAPI(API.ai_githubs, [gameID]);
   return Githubs(gameID, githubs);
 }
@@ -20,7 +21,7 @@ export function Githubs(gameID: number, ai_githubs: APIType.AIGithub[] | null) {
   const [show, setShow] = useState(false);
   const popup = (
     <Popup show={show} setShow={setShow}>
-      <FormGithub setShow={setShow}></FormGithub>
+      <FormGithub gameID={gameID}></FormGithub>
     </Popup>
   );
   const header = (
@@ -94,7 +95,8 @@ export function AIGithubDesc(ai_github: APIType.AIGithub) {
   );
 }
 
-function FormGithub(setShow: any) {
+function FormGithub(props: any) {
+  const {gameID} = props;
   const github = useStateValidate("", Format.trimSpace, (s) => {
     if (s.split("/").length === 1) {
       return "Need '/' in user/reponame";
@@ -110,7 +112,7 @@ function FormGithub(setShow: any) {
 
   const [createAI, sending] = API.useCallAPI(
     API.post_ai_github,
-    [1, github.value, branch.value],
+    [gameID, github.value, branch.value],
     (resp) => {
       history.push(`/ai/${resp.ai_github_id}`);
     }

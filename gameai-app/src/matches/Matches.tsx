@@ -8,22 +8,23 @@ import { Button, Popup, Select } from "../components";
 import { isVisitor, LoginUserContext } from "../login"
 
 export function MatchesPage() {
-  const { gameID } = useParams();
+  let { gameID } = useParams();
+  gameID = parseInt(gameID, 10);
   const [matches] = API.useAPI(API.matches, [gameID]);
   return Matches(gameID, matches);
 }
-export function Matches(game_id: number, matches: APIType.Match[] | null) {
+export function Matches(gameID: number, matches: APIType.Match[] | null) {
   const you = useContext(LoginUserContext)
   const [show, setShow] = useState(false);
   const [created, setCreated] = useState(false);
   const popup = (
     <Popup show={show} setShow={setShow}>
-      <FormMatch game_id={game_id} setShow={setShow} setCreated={setCreated} />
+      <FormMatch gameID={gameID} setShow={setShow} setCreated={setCreated} />
     </Popup>
   );
   let head = <>
     <h1>Match Results</h1>
-    <Link to={`/games/${game_id}/githubs`}>List of AIs</Link>
+    <Link to={`/games/${gameID}/githubs`}>List of AIs</Link>
   </>
   if (!matches) {
     return (
@@ -72,7 +73,7 @@ function FormMatch(props: any) {
   }
   const [createMatch, sending] = API.useCallAPI<any, any>(
     API.post_match,
-    [parseInt(props.game_id), [playoutAI1?.id, playoutAI2?.id]],
+    [props.gameID, [playoutAI1?.id, playoutAI2?.id]],
     (resp) => {
       props.setShow(false);
       props.setCreated(true);

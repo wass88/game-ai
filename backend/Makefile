@@ -57,6 +57,10 @@ kick-playout: target/kick
 	CONF_FILE=./configs/server.json \
 	target/kick playout
 
+kick-autoplayout: target/kick
+	CONF_FILE=./configs/server.json \
+	target/kick autoplayout
+
 test:
 	go test -v ./lib/...
 

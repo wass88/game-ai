@@ -9,7 +9,6 @@ import API from "./api";
 import { LoginUserContext } from "./login"
 
 import "./App.css";
-import whyDidYouRender from "@welldone-software/why-did-you-render";
 
 export default function App() {
   const [you] = API.useAPI(API.you, []);
