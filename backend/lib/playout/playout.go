@@ -11,6 +11,7 @@ import (
 
 	"github.com/pkg/errors"
 	gi "github.com/wass88/gameai/lib/game"
+	"github.com/wass88/gameai/lib/game/game27"
 	"github.com/wass88/gameai/lib/game/reversi"
 	"github.com/wass88/gameai/lib/protocol"
 	pr "github.com/wass88/gameai/lib/protocol"
@@ -19,6 +20,7 @@ import (
 func StartPlayout(gamename string, send gi.IPlayoutSender, cmds []*exec.Cmd) (*pr.Result, error) {
 	gameSelector := NewGameSelector()
 	gameSelector.Add("reversi", func() gi.Game { return reversi.NewReversi() })
+	gameSelector.Add("game27", func() gi.Game { return game27.NewGame27() })
 
 	game := gameSelector.Get(gamename)
 	ps := []*gi.CmdRW{}
@@ -61,7 +63,11 @@ func (g *GameSelector) Add(name string, game func() gi.Game) {
 }
 
 func (g *GameSelector) Get(name string) gi.Game {
-	return g.data[name]()
+	f, ok := g.data[name]
+	if !ok {
+		panic(errors.Errorf("Missing game: %s", name))
+	}
+	return f()
 }
 
 type HttpClient interface {
