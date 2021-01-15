@@ -31,6 +31,8 @@ func NewGame27() *Game27 {
 	return &Game27{board: board, first: true, record: []string{}}
 }
 
+const maxScore = 18
+
 func (g *Game27) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.Result, error) {
 	r0 := pr.ResultPlayer{0, "", ""}
 	r1 := pr.ResultPlayer{0, "", ""}
@@ -53,8 +55,8 @@ func (g *Game27) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.R
 		if err != nil {
 			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
 			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected EOF: %s", cn, err.Error())
-			result.Result[cn].Result = -64
-			result.Result[on].Result = 64
+			result.Result[cn].Result = -maxScore
+			result.Result[on].Result = maxScore
 			return result, nil
 		}
 		fmt.Printf("P%d: %v\n", cn, s)
@@ -68,16 +70,16 @@ func (g *Game27) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.R
 		if err != nil {
 			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
 			result.Result[cn].Exception = fmt.Sprintf("P%d: Unexpected Action: %s", cn, err.Error())
-			result.Result[cn].Result = -64
-			result.Result[on].Result = 64
+			result.Result[cn].Result = -maxScore
+			result.Result[on].Result = maxScore
 			return result, nil
 		}
 		err = g.act(*a)
 		if err != nil {
 			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
 			result.Result[cn].Exception = fmt.Sprintf("P%d: Wrong Action: %s", cn, err.Error())
-			result.Result[cn].Result = -64
-			result.Result[on].Result = 64
+			result.Result[cn].Result = -maxScore
+			result.Result[on].Result = maxScore
 			return result, nil
 		}
 		op.WriteLn(fmt.Sprintf("played %s", s))
