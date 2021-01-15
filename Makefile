@@ -30,19 +30,22 @@ add-user:
 	(sudo useradd $(WEB_USER) || true) &&\
 	sudo mkdir -p /home/$(WEB_USER) &&\
 	sudo chown $(WEB_USER) ~$(WEB_USER) &&\
-	sudo chgrp $(WEB_USER) ~$(WEB_USER)"
+	sudo chgrp $(WEB_USER) ~$(WEB_USER) &&\
+	sudo chmod 711 /hom/${WEB_USER}"
 
 install-mysql:
 	ssh $(ADDR) "\
 		cd /tmp &&\
 		sudo yum localinstall -y https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm &&\
-		sudo yum install -y mysql-community-client"
+		sudo yum install -y mysql-community-client &&\
+		sudo yum install -y yum install mysql-server &&\
+		sudo systemctl start mysqld"
 
 init-database:
 	ssh $(ADDR) "\
-		echo \"create database gameai\" | sudo mysql -paaaaaaaa&&\
-		echo \"create user gameai@localhost IDENTIFIED BY 'goodpassXYZ'\" | sudo mysql -paaaaaaaa&&\
-		echo \"grant all on gameai.* to gameai@localhost\" | sudo mysql -paaaaaaaa"
+		echo \"create database gameai\" | sudo mysql -pPa@1aaaa&&\
+		echo \"create user gameai@localhost IDENTIFIED BY 'goodpassXYZ*1'\" | sudo mysql -pPa@1aaaa&&\
+		echo \"grant all on gameai.* to gameai@localhost\" | sudo mysql -pPa@1aaaa"
 
 install-nginx:
 	ssh $(ADDR) "\
@@ -62,7 +65,8 @@ install-service:
 install-docker:
 	ssh $(ADDR) "\
 		sudo amazon-linux-extras install docker &&\
-		sudo gpasswd -a web docker"
+		sudo gpasswd -a web docker &&\
+		sudo systemctl start docker"
 
 install-golang:
 	ssh $(ADDR) "\
@@ -78,7 +82,7 @@ install-migrate:
 
 migrate:
 	ssh $(ADDR) "\
-		sudo migrate -database 'mysql://gameai:goodpassXYZ@tcp(127.0.0.1:3306)/gameai'\
+		sudo migrate -database 'mysql://gameai:goodpassXYZ*1@tcp(127.0.0.1:3306)/gameai'\
 		-path ~$(WEB_USER)/game-ai/backend/migrations -verbose up"
 
 .PHONY: deploy
