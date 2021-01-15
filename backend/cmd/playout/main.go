@@ -56,5 +56,15 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("=============    Result   ===========\n")
-	fmt.Printf("%v", res)
+	fmt.Printf("Game: %s\n", res.Game)
+	fmt.Printf("Record: %v\n", res.Record)
+	for i, player := range res.Result {
+		fmt.Printf("Player #%d's Score: %d\n", i, player.Result)
+	}
+	fmt.Printf("\n")
+	fmt.Printf("Exception: %v\n", res.Exception)
+	for i, player := range res.Result {
+		fmt.Printf("Player #%d's Exception: %s\n", i, player.Exception)
+		fmt.Printf("Player #%d's Stderr: %s\n", i, player.Stderr)
+	}
 }
