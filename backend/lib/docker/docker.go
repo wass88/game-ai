@@ -95,7 +95,7 @@ func (d *Docker) Run(c context.Context, image string, cpuPersent, memoryMB int64
 		}
 	}()
 	go func() {
-		_, err := stdcopy.StdCopy(os.Stdout, os.Stdin, hijk.Conn)
+		_, err := stdcopy.StdCopy(os.Stdout, os.Stderr, hijk.Conn)
 		if err != nil {
 			panic(err)
 		}
