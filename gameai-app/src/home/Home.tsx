@@ -36,7 +36,7 @@ export default function Home() {
                 <li>AIを作る</li>
                 <li>Dockerfileを書く</li>
                 <li>Githubにpush</li>
-                <li>AIを登録</li>
+                <li>AIを登録 (アカウントを教えて下さい。昇格します)</li>
                 <li>戦いが始まる</li>
               </ol>
               <p><a href="https://github.com/wass88/reversi-random">wass88/reversi-random</a>を参照のこと</p>
