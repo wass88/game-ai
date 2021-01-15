@@ -12,10 +12,11 @@ type CmdRW struct {
 	in     io.Writer
 	out    *bufio.Reader
 	stderr []byte
+	num int
 }
 
 func (r *CmdRW) WriteLn(s string) error {
-	fmt.Printf("--> %s\n", s)
+	fmt.Printf("-->%d %s\n", r.num, s)
 	_, err := io.WriteString(r.in, s+"\n")
 	if err != nil {
 		return err
@@ -34,12 +35,12 @@ func (r *CmdRW) ReadLn() (string, error) {
 		}
 		l = append(l, c...)
 	}
-	fmt.Printf("<-- %s\n", string(l))
+	fmt.Printf("<--%d %s\n", r.num, string(l))
 	return string(l), nil
 }
 
 // RunWithReadWrite runs cmd and returns pipe
-func RunWithReadWrite(c *exec.Cmd) (*CmdRW, error) {
+func RunWithReadWrite(c *exec.Cmd, num int) (*CmdRW, error) {
 	in, err := c.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -52,7 +53,7 @@ func RunWithReadWrite(c *exec.Cmd) (*CmdRW, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := &CmdRW{out: bufio.NewReader(out), in: in, stderr: []byte{}}
+	res := &CmdRW{out: bufio.NewReader(out), in: in, stderr: []byte{}, num: num}
 	go func() {
 		b := make([]byte, 1024)
 		for {

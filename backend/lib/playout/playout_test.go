@@ -18,11 +18,11 @@ func TestPlayout(t *testing.T) {
 	cmd0 := exec.Command(prog)
 	cmd1 := exec.Command(prog)
 	sender := &EmptySender{}
-	p0, err := gi.RunWithReadWrite(cmd0)
+	p0, err := gi.RunWithReadWrite(cmd0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	p1, err := gi.RunWithReadWrite(cmd1)
+	p1, err := gi.RunWithReadWrite(cmd1, 1)
 	if err != nil {
 		t.Fatal(err)
 	}

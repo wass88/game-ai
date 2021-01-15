@@ -45,7 +45,6 @@ func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.
 	cn := 0
 	on := 1
 	for {
-		fmt.Printf("Wait...P%d\n", cn)
 		s, err := cp.Wait()
 		if err != nil {
 			result.Exception = fmt.Sprintf("Failed By Player #%d", cn)
@@ -54,7 +53,6 @@ func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.
 			result.Result[on].Result = 64
 			return result, nil
 		}
-		fmt.Printf("P%d: %v\n", cn, s)
 		result.Record = append(result.Record, s)
 		err = sender.Update(protocol.ResultA{Record: strings.Join(result.Record, "\n"), Exception: result.Exception})
 		if err != nil {
