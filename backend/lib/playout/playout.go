@@ -27,7 +27,7 @@ func StartPlayout(gamename string, send gi.IPlayoutSender, cmds []*exec.Cmd) (*p
 	for i, cmd := range cmds {
 		p, err := gi.RunWithReadWrite(cmd, i)
 		if err != nil {
-			return nil, fmt.Errorf("Failed Run: %v", cmd)
+			return nil, errors.Wrapf(err, "Failed to Run: %v ", cmd,)
 		}
 		ps = append(ps, p)
 	}

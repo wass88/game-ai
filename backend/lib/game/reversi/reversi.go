@@ -44,6 +44,11 @@ func (r *Reversi) Start(players []*game.CmdRW, sender game.IPlayoutSender) (*pr.
 	op := p1
 	cn := 0
 	on := 1
+	defer func() {
+		result.Result[0].Stderr = string(p0.Stderr)
+		result.Result[1].Stderr = string(p1.Stderr)
+	}()
+
 	for {
 		s, err := cp.Wait()
 		if err != nil {

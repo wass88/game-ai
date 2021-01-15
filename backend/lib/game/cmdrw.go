@@ -11,7 +11,7 @@ import (
 type CmdRW struct {
 	in     io.Writer
 	out    *bufio.Reader
-	stderr []byte
+	Stderr []byte
 	num int
 }
 
@@ -53,7 +53,7 @@ func RunWithReadWrite(c *exec.Cmd, num int) (*CmdRW, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := &CmdRW{out: bufio.NewReader(out), in: in, stderr: []byte{}, num: num}
+	res := &CmdRW{out: bufio.NewReader(out), in: in, Stderr: []byte{}, num: num}
 	go func() {
 		b := make([]byte, 1024)
 		for {
@@ -65,7 +65,7 @@ func RunWithReadWrite(c *exec.Cmd, num int) (*CmdRW, error) {
 					panic(err)
 				}
 			}
-			res.stderr = append(res.stderr, b[:k]...)
+			res.Stderr = append(res.Stderr, b[:k]...)
 		}
 	}()
 	err = c.Start()
