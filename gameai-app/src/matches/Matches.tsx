@@ -59,7 +59,7 @@ export function Matches(gameID: number, matches: APIType.Match[] | null) {
 }
 
 function FormMatch(props: any) {
-  const [ais] = API.useAPI(API.latest_ai, [props.game_id]);
+  const [ais] = API.useAPI(API.latest_ai, [props.gameID]);
   const [playoutAI1, setPlayoutAI1] = useState<any>(undefined);
   const [playoutAI2, setPlayoutAI2] = useState<any>(undefined);
   const options = ais?.map((ai: any) => {
