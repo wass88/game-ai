@@ -27,11 +27,11 @@ init-deploy: add-user rsync install-mysql install-nginx install-docker install-m
 
 add-user:
 	ssh $(ADDR) "\
-	(sudo useradd $(WEB_USER) || true) &&\
+	(id -u ${WEB_USER} &>/dev/null || sudo useradd $(WEB_USER)) &&\
 	sudo mkdir -p /home/$(WEB_USER) &&\
 	sudo chown $(WEB_USER) ~$(WEB_USER) &&\
 	sudo chgrp $(WEB_USER) ~$(WEB_USER) &&\
-	sudo chmod 711 /hom/${WEB_USER}"
+	sudo chmod 711 /home/${WEB_USER}"
 
 install-mysql:
 	ssh $(ADDR) "\
@@ -41,11 +41,19 @@ install-mysql:
 		sudo yum install -y yum install mysql-server &&\
 		sudo systemctl start mysqld"
 
+NEW_DB_PASSWORD=GOODpass1())z
+init-database-root:
+	ssh $(ADDR) " \
+		DB_PASSWORD=$$(sudo grep "A temporary password is generated" /var/log/mysqld.log | sed -s 's/.*root@localhost: //') \
+		mysql -uroot -p${DB_PASSWORD} --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${NEW_DB_PASSWORD}'; flush privileges;"
+
 init-database:
-	ssh $(ADDR) "\
-		echo \"create database gameai\" | sudo mysql -pPa@1aaaa&&\
-		echo \"create user gameai@localhost IDENTIFIED BY 'goodpassXYZ*1'\" | sudo mysql -pPa@1aaaa&&\
-		echo \"grant all on gameai.* to gameai@localhost\" | sudo mysql -pPa@1aaaa"
+	ssh $(ADDR) " \
+		echo \" \
+			create database gameai; \
+			create user gameai@localhost IDENTIFIED BY 'goodpassXYZ*1'; \
+			grant all on gameai.* to gameai@localhost; \
+		\" | sudo mysql --connect-expired-password \"-p${NEW_DB_PASSWORD}\" "
 
 install-nginx:
 	ssh $(ADDR) "\
