@@ -30,31 +30,35 @@ function Game27View(props: {
   if (record[0] == null || record[0] === "") {
     return <></>
   }
-  record.some((r, i) : boolean => {
-    if (i >= nth_played) {
-      return true;
-    }
+  try {
+    record.some((r, i) : boolean => {
+      if (i >= nth_played) {
+        return true;
+      }
 
-    const current_player = i % 2 === 0 ? FIRST : SECOND;
-    if (r === "pass") {
+      const current_player = i % 2 === 0 ? FIRST : SECOND;
+      if (r === "pass") {
+        return false;
+      }
+
+      const [move, nc, nk] = r.split(" ");
+      if (move !== "move") {
+        throw `Invalid act ${move}`
+      }
+      const c = parseInt(nc, 10);
+      const k = parseInt(nk, 10);
+
+      const towers = board.filter((c) => c.length > 0 && c[0][0] === current_player).length;
+
+      const d = c + towers * current_player;
+      board[d] = board[c].slice(0, k).concat(board[d]);
+      board[c] = board[c].slice(k);
+
       return false;
-    }
-
-    const [move, nc, nk] = r.split(" ");
-    if (move !== "move") {
-      throw `Invalid act ${move}`
-    }
-    const c = parseInt(nc, 10);
-    const k = parseInt(nk, 10);
-
-    const towers = board.filter((c) => c.length > 0 && c[0][0] === current_player).length;
-
-    const d = c + towers * current_player;
-    board[d] = board[c].slice(0, k).concat(board[d]);
-    board[c] = board[c].slice(k);
-
-    return false;
-  })
+    })
+  } catch (e) {
+    console.error(e);
+  }
   let first_score = board[SIZE-1].length;
   let second_score = board[0].length;
   return <>
