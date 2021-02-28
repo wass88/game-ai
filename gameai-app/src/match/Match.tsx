@@ -25,7 +25,7 @@ export function Match(match: APIType.Match | null, gameID: number | undefined) {
             return <>
               <Reversi
                 first={match?.results[0].ai?.ai_github.github || "first"}
-                second={match?.results[0].ai?.ai_github.github || "second"}
+                second={match?.results[1].ai?.ai_github.github || "second"}
                 record={match?.record || ""}
               />
               {MatchDesc(match)}
@@ -35,7 +35,7 @@ export function Match(match: APIType.Match | null, gameID: number | undefined) {
             return <>
               <Game27
                 first={match?.results[0].ai?.ai_github.github || "first"}
-                second={match?.results[0].ai?.ai_github.github || "second"}
+                second={match?.results[1].ai?.ai_github.github || "second"}
                 record={match?.record || ""}
               />
               {MatchDesc(match)}

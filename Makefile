@@ -43,9 +43,9 @@ install-mysql:
 
 NEW_DB_PASSWORD=GOODpass1())z
 init-database-root:
-	ssh $(ADDR) " \
-		DB_PASSWORD=$$(sudo grep "A temporary password is generated" /var/log/mysqld.log | sed -s 's/.*root@localhost: //') \
-		mysql -uroot -p${DB_PASSWORD} --connect-expired-password -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${NEW_DB_PASSWORD}'; flush privileges;"
+	ssh $(ADDR) "\
+		DB_PASSWORD=\$$(sudo grep 'A temporary password is generated' /var/log/mysqld.log | sed -e 's/.*root@localhost: //'); \
+		mysql -uroot \"-p$${DB_PASSWORD}\" --connect-expired-password -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY '${NEW_DB_PASSWORD}'; flush privileges;\" "
 
 init-database:
 	ssh $(ADDR) " \
@@ -53,7 +53,7 @@ init-database:
 			create database gameai; \
 			create user gameai@localhost IDENTIFIED BY 'goodpassXYZ*1'; \
 			grant all on gameai.* to gameai@localhost; \
-		\" | sudo mysql --connect-expired-password \"-p${NEW_DB_PASSWORD}\" "
+		\" | mysql -uroot --connect-expired-password \"-p${NEW_DB_PASSWORD}\" "
 
 install-nginx:
 	ssh $(ADDR) "\
