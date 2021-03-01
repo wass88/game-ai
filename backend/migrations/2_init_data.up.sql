@@ -4,8 +4,8 @@ VALUES (1, "reversi"), (2, "game27");
 INSERT INTO user (id, name, github_name, authority)
 VALUES
   (1, "wass88", "wass88", "user"),
-  (1, "yamunaku", "yamunaku", "user"),
-  (1, "primenumber", "primenumber", "user");
+  (2, "yamunaku", "yamunaku", "user"),
+  (3, "primenumber", "primenumber", "user");
 
 INSERT INTO ai_github (game_id, user_id, github, branch, updating)
 VALUES
