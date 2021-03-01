@@ -41,13 +41,12 @@ install-mysql:
 		sudo yum install -y yum install mysql-server &&\
 		sudo systemctl start mysqld"
 
-NEW_DB_PASSWORD=GOODpass1())z
-init-database-root:
+DB_PASS_FILE=mysql-root
+NEW_DB_PASSWORD= $(shell cat $(DB_PASS_FILE))
+init-database:
 	ssh $(ADDR) "\
 		DB_PASSWORD=\$$(sudo grep 'A temporary password is generated' /var/log/mysqld.log | sed -e 's/.*root@localhost: //'); \
-		mysql -uroot \"-p$${DB_PASSWORD}\" --connect-expired-password -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY '${NEW_DB_PASSWORD}'; flush privileges;\" "
-
-init-database:
+		mysql -uroot \"-p\$${DB_PASSWORD}\" --connect-expired-password -e \"ALTER USER 'root'@'localhost' IDENTIFIED BY '${NEW_DB_PASSWORD}'; flush privileges;\" "
 	ssh $(ADDR) " \
 		echo \" \
 			create database gameai; \
@@ -66,8 +65,8 @@ install-service:
 		sudo cp ~$(WEB_USER)/game-ai/backend/configs/{game-ai-web,game-ai-kick}.service /etc/systemd/system/ &&\
 		sudo systemctl daemon-reload &&\
 		sudo systemctl enable game-ai-web &&\
-		sudo systemctl start game-ai-web &&\
 		sudo systemctl enable game-ai-kick &&\
+		sudo systemctl start game-ai-web &&\
 		sudo systemctl start game-ai-kick"
 
 install-docker:
