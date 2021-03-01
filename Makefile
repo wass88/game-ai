@@ -39,6 +39,7 @@ install-nginx:
 	ssh $(ADDR) "\
 		sudo amazon-linux-extras install -y nginx1 &&\
 		sudo cp ~$(WEB_USER)/game-ai/backend/configs/nginx.conf /etc/nginx/nginx.conf &&\
+		sudo systemctl enable nginx &&\
 		sudo systemctl restart nginx"
 
 install-service:
@@ -57,6 +58,7 @@ install-docker:
 	ssh $(ADDR) "\
 		sudo amazon-linux-extras install docker &&\
 		sudo gpasswd -a web docker &&\
+		sudo systemctl enable docker &&\
 		sudo systemctl start docker"
 
 install-golang:
