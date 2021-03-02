@@ -75,6 +75,14 @@ func (d *Docker) Run(c context.Context, image string, cpuPersent, memoryMB int64
 		return errors.Wrapf(err, "On Creating container %s", image)
 	}
 
+	defer func() {
+		c := context.Background()
+		err := d.Client.ContainerRemove(c, container.ID, types.ContainerRemoveOptions{Force: true})
+		if err != nil {
+			fmt.Printf("Failed remove container: %s(%s) : %s\n", image, container.ID, err)
+		}
+	}()
+
 	options := types.ContainerStartOptions{}
 	err = d.Client.ContainerStart(c, container.ID, options)
 	if err != nil {
@@ -91,13 +99,13 @@ func (d *Docker) Run(c context.Context, image string, cpuPersent, memoryMB int64
 	go func() {
 		_, err := io.Copy(hijk.Conn, os.Stdin)
 		if err != nil {
-			panic(err)
+			fmt.Printf("Failed Stdin Copy %s\n", err)
 		}
 	}()
 	go func() {
 		_, err := stdcopy.StdCopy(os.Stdout, os.Stderr, hijk.Conn)
 		if err != nil {
-			panic(err)
+			fmt.Printf("Failed StdCopy %s\n", err)
 		}
 	}()
 
@@ -158,4 +166,24 @@ func makeTar(path string) (io.Reader, error) {
 		return nil, errors.Wrapf(err, "On Close")
 	}
 	return buf, err
+}
+
+func (d *Docker) HasImage(c context.Context, image string) (bool, error) {
+	conf := cont.Config{
+		Image:        image,
+	}
+
+	hostConf := cont.HostConfig{ }
+	container, err := d.Client.ContainerCreate(c, &conf, &hostConf, nil, "")
+	if client.IsErrNetworkNotFound(err) {
+		return false, nil
+	}
+	if err != nil {
+		return false, errors.Wrapf(err, "Create Contaienr %s", image)
+	}
+	err = d.Client.ContainerRemove(c, container.ID, types.ContainerRemoveOptions{})
+	if err != nil {
+		return true, errors.Wrapf(err, "Create Contaienr %s", image)
+	}
+	return true, nil;
 }

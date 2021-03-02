@@ -28,9 +28,11 @@ import (
 	Exec Container:
 		Exec ContainerId
 
-	Purge Container:
+	Purge Container: TODO
 		Remove out-dated files and image
 		<- Purged Container
+
+	Check Image of Container:
 */
 type Cont struct {
 	SaveDir string
@@ -281,4 +283,21 @@ func Unzip(src, dest string) error {
 	}
 
 	return nil
+}
+
+func HasImage(c *Commit) (bool, error) {
+	ctx := context.Background()
+
+	doc, err := docker.NewDocker()
+	if err != nil {
+		return false, errors.Wrapf(err, "NewDocker")
+	}
+
+	image := c.Image()
+
+	ok, err := doc.HasImage(ctx, image)
+	if err != nil {
+		return false ,errors.Wrapf(err, "HasImage")
+	}
+	return ok, nil
 }

@@ -36,12 +36,23 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
+		} else if cmd == "recover" {
+			err := db.RecoverDeletedImages()
+			if err != nil {
+				panic(err)
+			}
 		} else {
 			panic(fmt.Sprintf("Unknown command %s", cmd))
 		}
 	}
 	if len(cmds) == 1 {
-		fmt.Printf("Start Kick Tick")
+		fmt.Printf("Start Recover\n")
+		err := db.RecoverDeletedImages()
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Printf("Start Kick Tick\n")
 		kicker := server.NewTaskKicker(db)
 		kicker.Start()
 

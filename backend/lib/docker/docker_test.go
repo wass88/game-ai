@@ -19,7 +19,7 @@ func TestRun(t *testing.T) {
 	c := context.Background()
 	c, cancel := context.WithTimeout(c, time.Second/2)
 	defer cancel()
-	err = d.Run(c, "random", 100, 256)
+	err = d.Run(c, "reversi-random", 100, 256)
 	if strings.Contains(err.Error(), " On Waiting") {
 		t.Fatal(err)
 	}
@@ -64,5 +64,27 @@ func TestMakeTar(t *testing.T) {
 	}
 	if !ok {
 		t.Fatal("Missing Docker")
+	}
+}
+
+func TestHasImage(t *testing.T) {
+	d, err := NewDocker()
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := context.Background()
+	ok, err := d.HasImage(c, "reversi-random")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		t.Fatal("Missig image")
+	}
+	ok2, err := d.HasImage(c, "reversi-wwwwww")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ok2 {
+		t.Fatal("Having image")
 	}
 }

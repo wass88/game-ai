@@ -10,6 +10,8 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/pkg/errors"
+
+	"github.com/wass88/gameai/lib/container"
 )
 
 func (db *DB) KickSetupAI() error {
@@ -247,11 +249,19 @@ type AINeedSetup struct {
 }
 
 func (db *DB) GetNeedSetupAI() ([]AINeedSetup, error) {
+	//The latest ones are need to update
 	res := []AINeedSetup{}
 	err := db.DB.Select(&res, `
-		SELECT ai.id AS id, g.github AS github, g.branch AS branch, ai.commit AS commit
-		FROM ai INNER JOIN ai_github AS g ON ai.ai_github_id = g.id
-		WHERE ai.state = "found"
+	SELECT ai.id AS id, g.github AS github, g.branch AS branch, ai.commit AS commit, ai.ai_github_id
+	FROM ai
+	INNER JOIN ai_github AS g ON ai.ai_github_id = g.id
+	INNER JOIN (
+		SELECT ai.ai_github_id, MAX(ai.created_at) AS created_at
+		FROM ai
+		GROUP BY ai.ai_github_id
+		) AS o
+	ON ai.ai_github_id = o.ai_github_id AND ai.created_at = o.created_at
+	WHERE ai.state = "found";
 	`)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed Select")
@@ -265,6 +275,18 @@ func (ai *AINeedSetup) SetupCmd(c AIRunnerConf) *exec.Cmd {
 		"-commit", ai.Commit, "setup",
 	}
 	return exec.Command(c.Cmd, args...)
+}
+
+func (ai *AINeedSetup) HasImage(c AIRunnerConf) (bool, error) {
+	ok, err := container.HasImage(&container.Commit{
+			Github: ai.Github,
+			Branch: ai.Branch,
+			Commit: ai.Commit,
+	})
+	if err != nil {
+		return false, errors.Wrapf(err, "container.HasImage")
+	}
+	return ok, nil
 }
 
 func (a *AIID) UpdateState(db *DB, state AIState) error {
@@ -303,6 +325,32 @@ func (ai *AINeedSetup) KickSetup(db *DB) error {
 	if err != nil {
 		ai.ID.UpdateState(db, "failed")
 		return errors.Wrapf(err, "Failed to Run: err")
+	}
+	return nil
+}
+
+
+func (db *DB) RecoverDeletedImages() error {
+	var ais []AINeedSetup
+
+	err := db.DB.Select(&ais, `
+		SELECT ai.id AS id, g.github AS github, g.branch AS branch, ai.commit AS commit
+		FROM ai INNER JOIN ai_github AS g ON ai.ai_github_id = g.id
+		WHERE ai.state = "ready"
+	`)
+	if err != nil {
+		return errors.Wrapf(err, "Select ai for ready")
+	}
+
+	for _, ai := range ais {
+		ok, err := ai.HasImage(db.Config.AIRunner)
+		if err != nil {
+			return errors.Wrapf(err, "ai.HasImage %v", ai)
+		}
+		if !ok {
+			fmt.Printf("Recover Missing Image %v", ai)
+			ai.ID.UpdateState(db, "found")
+		}
 	}
 	return nil
 }
