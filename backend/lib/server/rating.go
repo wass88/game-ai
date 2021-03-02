@@ -54,7 +54,7 @@ func (e EroRating) Rating(old []float64, score []int) []float64 {
 				win = j
 				lose = i
 			}
-			winRate := 1.0 / (math.Pow(10, (old[lose] - old[win])/400) + 1)
+			winRate := 1.0 / (math.Pow(10, (old[win] - old[lose])/400) + 1)
 			diff := e.K * winRate
 			res[win] += diff
 			res[lose] -= diff
