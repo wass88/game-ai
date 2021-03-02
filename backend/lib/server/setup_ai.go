@@ -252,7 +252,7 @@ func (db *DB) GetNeedSetupAI() ([]AINeedSetup, error) {
 	//The latest ones are need to update
 	res := []AINeedSetup{}
 	err := db.DB.Select(&res, `
-	SELECT ai.id AS id, g.github AS github, g.branch AS branch, ai.commit AS commit, ai.ai_github_id
+	SELECT ai.id AS id, g.github AS github, g.branch AS branch, ai.commit AS commit
 	FROM ai
 	INNER JOIN ai_github AS g ON ai.ai_github_id = g.id
 	INNER JOIN (
