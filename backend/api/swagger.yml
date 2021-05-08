@@ -46,13 +46,20 @@ paths:
     get:
       description: List of Matches of Game
       parameters:
-        - {name: id,type: integer, in: path, required: true}
+        - {name: id, type: integer, in: path, required: true}
+        - {name: ai, type: integer, in: query, required: false}
+        - {name: page, type: integer, in: query, required: false} 
       responses:
         200:
           description: Matches
           schema:
-            type: array
-            items: {$ref: "#/definitions/Match"}
+            type: object
+            properties:
+              pages:
+                type: integer
+              matches:
+                type: array
+                items: {$ref: "#/definitions/Match"}
         
   /api/matches/{id}:
     get:
@@ -173,9 +180,9 @@ definitions:
       id: {type: integer, example: 1}
       commit: {type: string, example: "cccccc"}
       state: {type: string}
+      rate: {type: integer}
+      updated_at: {type: string, format: date}
       ai_github: {$ref: "#/definitions/AIGithub"}
-      updated_at: {type: string, format: date-time }
-      rate: {type: number}
     
   Game:
     type: object

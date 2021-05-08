@@ -6,14 +6,17 @@ import "./Matches.css";
 import { MatchDesc } from "../match/Match";
 import { Button, Popup, Select } from "../components";
 import { isVisitor, LoginUserContext } from "../login"
+import { useQuery } from "../Query"
 
 export function MatchesPage() {
   let { gameID } = useParams();
   gameID = parseInt(gameID, 10);
-  const [matches] = API.useAPI(API.matches, [gameID]);
-  return Matches(gameID, matches);
+  let { page } = useQuery("page");
+  let pageV = page ? parseInt(page, 10) : undefined;
+  const [matches] = API.useAPI(API.matches, [gameID, pageV]);
+  return Matches(gameID, matches, pageV);
 }
-export function Matches(gameID: number, matches: APIType.Match[] | null) {
+export function Matches(gameID: number, matches: {pages: number, matches: APIType.Match[]} | null, page?: number) {
   const you = useContext(LoginUserContext)
   const [show, setShow] = useState(false);
   const [created, setCreated] = useState(false);
@@ -34,7 +37,7 @@ export function Matches(gameID: number, matches: APIType.Match[] | null) {
       </>
     );
   }
-  const matchList = matches.map((match) => MatchDesc(match));
+  const matchList = matches.matches.map((match) => MatchDesc(match));
   return (
     <>
       {head}
@@ -53,6 +56,14 @@ export function Matches(gameID: number, matches: APIType.Match[] | null) {
       </Button>
       })()}
       <div className="match-list">{matchList}</div>
+      {
+        (() => {
+          let pageV = (page ? page : 0)
+          if ( pageV < matches.pages - 1) {
+            return <Link to={`?page=${pageV + 1}`}>Next Page...</Link>
+          }
+        })()
+      }
       {popup}
     </>
   );

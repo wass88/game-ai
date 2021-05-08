@@ -4,6 +4,13 @@ import { useState, useEffect } from "react";
 
 const Url = `${window.location.protocol}//${window.location.hostname}:${window.location.port}`;
 
+function encodeQuery(query: {[key: string]: string}) {
+  const ret = [];
+  for (let d in query)
+    ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(query[d]));
+  return '?' + ret.join('&');
+}
+
 async function fetch_with_cookie(
   method: string,
   path: string,
@@ -65,8 +72,14 @@ const API = {
   async match(match_id: number): Promise<APIType.Match> {
     return fetch_with_cookie("GET", "/api/matches/" + match_id, {});
   },
-  async matches(game_id: number): Promise<APIType.Match[]> {
-    return fetch_with_cookie("GET", "/api/games/" + game_id + "/matches", {});
+  async matches(game_id: number, page?: number): Promise<{pages: number, matches: APIType.Match[]}> {
+    console.log("Y", {game_id, page});
+    let query : any = {};
+    if (page) {
+      query.page = page.toString()
+    }
+    let url = "/api/games/" + game_id + "/matches" + encodeQuery(query);
+    return fetch_with_cookie("GET", url, {});
   },
   useAPI<P extends any[], T>(
     api: (...args: P) => Promise<T>,

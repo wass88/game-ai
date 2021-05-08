@@ -55,7 +55,20 @@ func HandlerViewMatches(db *DB) func(c echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "invalid id")
 		}
-		res, err := db.GetMatches((GameID)(id))
+
+		pageP := c.QueryParam("page")
+		var page *int = nil
+		if pageP != "" {
+			val, err := strconv.Atoi(pageP)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "invalid pages")
+			}
+			page = &val
+		}
+
+		//TODO: aiP := c.QueryParam("ais")
+
+		res, err := db.GetMatches((GameID)(id), page)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Failed db select")
 		}
@@ -69,8 +82,15 @@ func dInt(i **int) *int {
 	}
 	return *i
 }
-func (db *DB) GetMatches(id GameID) ([]*MatchShortR, error) {
+
+type PagedMatchShortR struct {
+	Pages int `json:"pages"`
+	Matches []*MatchShortR `json:"matches"`
+}
+func (db *DB) GetMatches(id GameID, page *int) (*PagedMatchShortR, error) {
 	type Result struct {
+		Count int `json:"count"`
+
 		ID        MatchID      `db:"id"`
 		State     PlayoutState `db:"state"`
 		Exception string       `db:"exception"`
@@ -89,29 +109,42 @@ func (db *DB) GetMatches(id GameID) ([]*MatchShortR, error) {
 		UserID     UserID     `db:"user_id"`
 		UserName   string     `db:"user_name"`
 	}
+
+	pageSize := 100
+	offset := 0
+	if page != nil {
+		offset = pageSize * *page
+	}
 	var sel []Result
 	err := db.DB.Select(&sel, `
-		SELECT
-			p.id AS id, p.state AS state, IFNULL(r.exception, "") AS exception,
-			p.game_id AS game_id, g.name AS game_name,
-			rai.result AS result, rai.exception AS rexception,
-			ai.id AS ai_id, ai.commit AS ai_commit,
-			ai.ai_github_id AS aigithub_id, ag.github AS ai_github, ag.branch AS ai_branch,
-			u.id AS user_id, u.name AS user_name
-		FROM playout AS p
-		INNER JOIN game AS g ON g.id = p.game_id 
-		INNER JOIN playout_ai AS pai ON pai.playout_id = p.id
-		INNER JOIN ai AS ai ON ai.id = pai.ai_id
-		INNER JOIN ai_github AS ag ON ag.id = ai.ai_github_id
-		INNER JOIN user AS u ON u.id = ag.user_id
-		LEFT JOIN playout_result AS r ON r.playout_id = p.id
-		LEFT JOIN playout_result_ai AS rai ON rai.playout_id = p.id AND rai.turn = pai.turn
-		WHERE g.id = ?
-		ORDER BY p.id DESC, pai.turn ASC
-	`, id)
+	SELECT
+		COUNT(1) OVER() AS count,
+		p.id AS id, p.state AS state, IFNULL(r.exception, "") AS exception,
+		p.game_id AS game_id, g.name AS game_name,
+		rai.result AS result, rai.exception AS rexception,
+		ai.id AS ai_id, ai.commit AS ai_commit,
+		ai.ai_github_id AS aigithub_id, ag.github AS ai_github, ag.branch AS ai_branch,
+		u.id AS user_id, u.name AS user_name
+	FROM playout AS p
+	INNER JOIN game AS g ON g.id = p.game_id 
+	INNER JOIN playout_ai AS pai ON pai.playout_id = p.id
+	INNER JOIN ai AS ai ON ai.id = pai.ai_id
+	INNER JOIN ai_github AS ag ON ag.id = ai.ai_github_id
+	INNER JOIN user AS u ON u.id = ag.user_id
+	LEFT JOIN playout_result AS r ON r.playout_id = p.id
+	LEFT JOIN playout_result_ai AS rai ON rai.playout_id = p.id AND rai.turn = pai.turn
+	WHERE g.id = ?
+	ORDER BY p.id DESC, pai.turn ASC 
+	LIMIT ? OFFSET ?
+	`, id, pageSize, offset)
 
 	if err != nil {
 		return nil, errors.Wrapf(err, "Faild select: Game %d", id)
+	}
+
+	pages := 1
+	if len(sel) > 0 {
+		pages = (sel[0].Count + pageSize - 1) / pageSize
 	}
 
 	res := []*MatchShortR{}
@@ -155,7 +188,7 @@ func (db *DB) GetMatches(id GameID) ([]*MatchShortR, error) {
 	if c != nil {
 		res = append(res, c)
 	}
-	return res, nil
+	return &PagedMatchShortR{Pages: pages, Matches: res}, nil
 }
 
 type MatchR struct {

@@ -10,9 +10,9 @@ export interface AI {
      */
     commit: string;
     state?: string;
-    ai_github: AIGithub;
-    updated_at?: string; // date-time
     rate?: number;
+    updated_at?: string; // date
+    ai_github: AIGithub;
 }
 export interface AIGithub {
     /**
