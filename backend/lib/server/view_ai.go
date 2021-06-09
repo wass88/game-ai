@@ -111,7 +111,8 @@ func (db *DB) GetAIGithubsByGame(id GameID) ([]AIGithubRAI, error) {
 		WHERE ai.ai_github_id = g.id
 		ORDER BY ai.created_at DESC LIMIT 1) AS ai ON ai.ai_github_id = g.id
 	LEFT JOIN rate ON rate.game_id = g.game_id AND rate.ai_id = ai.id
-	WHERE g.game_id = ?;
+	WHERE g.game_id = ?
+	ORDER BY rate.rate DESC;
 	`, id)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed select game %d", id)
